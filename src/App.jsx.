@@ -1,0 +1,248 @@
+import React, { useState, useEffect, useMemo, useRef } from "react";
+import { Plus, Trash2, Pencil, Search, Package, Wallet, CheckCircle2, XCircle, Tag, X, ImagePlus, ImageOff } from "lucide-react";
+
+const emptySizeRow = () => ({ size: "", qty: 1 });
+const EMPTY_FORM = { type: "", desc: "", price: "", status: "available", image: null, sizes: [emptySizeRow()] };
+const STORAGE_KEY = 'clothes_inventory_data';
+
+export default function ClothesInventory() {
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [form, setForm] = useState(EMPTY_FORM);
+  const [editingId, setEditingId] = useState(null);
+  const [query, setQuery] = useState("");
+  const [filter, setFilter] = useState("all");
+  const [showForm, setShowForm] = useState(false);
+  const fileRef = useRef(null);
+
+  // تحميل البيانات من المتصفح عند بدء التطبيق
+  useEffect(() => {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      setItems(JSON.parse(saved));
+    }
+    setLoading(false);
+  }, []);
+
+  // دالة لحفظ البيانات في المتصفح
+  const saveToStorage = (newItems) => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(newItems));
+    setItems(newItems);
+  };
+
+  const totalQty = (it) => (it.sizes || []).reduce((s, r) => s + (Number(r.qty) || 0), 0);
+
+  const resetForm = () => {
+    setForm(EMPTY_FORM);
+    setEditingId(null);
+    setShowForm(false);
+  };
+
+  const handleImageFile = (file) => {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const maxW = 500;
+        const scale = Math.min(1, maxW / img.width);
+        const canvas = document.createElement("canvas");
+        canvas.width = img.width * scale;
+        canvas.height = img.height * scale;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        const dataUrl = canvas.toDataURL("image/jpeg", 0.72);
+        setForm((f) => ({ ...f, image: dataUrl }));
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const updateSizeRow = (idx, field, value) => {
+    setForm((f) => {
+      const sizes = [...f.sizes];
+      sizes[idx] = { ...sizes[idx], [field]: value };
+      return { ...f, sizes };
+    });
+  };
+  const addSizeRow = () => setForm((f) => ({ ...f, sizes: [...f.sizes, emptySizeRow()] }));
+  const removeSizeRow = (idx) => setForm((f) => ({ ...f, sizes: f.sizes.filter((_, i) => i !== idx) }));
+
+  const submit = (e) => {
+    e.preventDefault();
+    if (!form.type.trim()) return;
+    const cleanSizes = form.sizes.filter((r) => Number(r.qty) > 0).map((r) => ({ size: r.size.trim(), qty: Number(r.qty) }));
+    const finalSizes = cleanSizes.length ? cleanSizes : [{ size: "", qty: 1 }];
+    const id = editingId || Date.now().toString();
+    const newItem = {
+      id,
+      type: form.type.trim(),
+      desc: form.desc.trim(),
+      price: Number(form.price) || 0,
+      status: form.status,
+      image: form.image,
+      sizes: finalSizes,
+    };
+
+    const newItems = editingId 
+      ? items.map((p) => (p.id === editingId ? newItem : p))
+      : [newItem, ...items];
+      
+    saveToStorage(newItems);
+    resetForm();
+  };
+
+  const startEdit = (it) => {
+    setForm({
+      type: it.type,
+      desc: it.desc,
+      price: it.price,
+      status: it.status,
+      image: it.image || null,
+      sizes: it.sizes && it.sizes.length ? it.sizes : [emptySizeRow()],
+    });
+    setEditingId(it.id);
+    setShowForm(true);
+  };
+
+  const remove = (id) => {
+    const newItems = items.filter((it) => it.id !== id);
+    saveToStorage(newItems);
+  };
+
+  const toggleStatus = (it) => {
+    const newItems = items.map((x) => 
+      x.id === it.id ? { ...x, status: x.status === "available" ? "sold" : "available" } : x
+    );
+    saveToStorage(newItems);
+  };
+
+  const filtered = useMemo(() => {
+    return items.filter((it) => {
+      const matchesQuery = (it.type + " " + it.desc).toLowerCase().includes(query.toLowerCase());
+      const matchesFilter = filter === "all" || it.status === filter;
+      return matchesQuery && matchesFilter;
+    });
+  }, [items, query, filter]);
+
+  const stats = useMemo(() => {
+    const totalPieces = items.reduce((s, it) => s + totalQty(it), 0);
+    const availablePieces = items.filter((i) => i.status === "available").reduce((s, it) => s + totalQty(it), 0);
+    const totalValue = items.filter((i) => i.status === "available").reduce((s, it) => s + totalQty(it) * Number(it.price || 0), 0);
+    return { totalPieces, availablePieces, totalValue };
+  }, [items]);
+
+  return (
+    <div dir="rtl" className="min-h-screen" style={{ background: "#EDE7D8", fontFamily: "'IBM Plex Sans Arabic', sans-serif" }}>
+      <header className="px-5 pt-8 pb-6" style={{ background: "#232323" }}>
+        <div className="max-w-5xl mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-md flex items-center justify-center rotate-[-8deg]" style={{ background: "#C89B3C" }}>
+              <Tag size={22} color="#232323" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-extrabold" style={{ color: "#EDE7D8" }}>سجل الملابس</h1>
+              <p className="text-sm" style={{ color: "#B5AD98" }}>مخزون محلي — جاهز للبيع</p>
+            </div>
+          </div>
+          <button
+            onClick={() => { setShowForm(true); setForm(EMPTY_FORM); setEditingId(null); }}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-md font-semibold text-sm transition active:scale-95"
+            style={{ background: "#C89B3C", color: "#232323" }}
+          >
+            <Plus size={18} /> إضافة قطعة
+          </button>
+        </div>
+      </header>
+
+      <main className="max-w-5xl mx-auto px-5 py-6">
+        <div className="grid grid-cols-3 gap-3 mb-6">
+          <StatCard icon={<Package size={18} />} label="إجمالي القطع" value={stats.totalPieces} color="#2C4A6E" />
+          <StatCard icon={<CheckCircle2 size={18} />} label="متوفرة" value={stats.availablePieces} color="#4B7A55" />
+          <StatCard icon={<Wallet size={18} />} label="القيمة (د.ج)" value={stats.totalValue.toLocaleString("ar-DZ")} color="#C89B3C" />
+        </div>
+
+        <div className="flex flex-col sm:flex-row gap-3 mb-6">
+          <div className="flex items-center gap-2 flex-1 px-3 py-2.5 rounded-md bg-white border" style={{ borderColor: "#D9D0BA" }}>
+            <Search size={16} color="#8A8272" />
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="ابحث عن نوع أو وصف..."
+              className="flex-1 outline-none text-sm bg-transparent"
+            />
+          </div>
+          <div className="flex gap-2">
+            {[ { key: "all", label: "الكل" }, { key: "available", label: "متوفر" }, { key: "sold", label: "مباع" } ].map((f) => (
+              <button
+                key={f.key}
+                onClick={() => setFilter(f.key)}
+                className="px-4 py-2 rounded-md text-sm font-medium transition"
+                style={filter === f.key ? { background: "#2C4A6E", color: "#EDE7D8" } : { background: "#F7F3E9", color: "#5A5648", border: "1px solid #D9D0BA" }}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {showForm && (
+          <form onSubmit={submit} className="mb-6 p-5 rounded-lg bg-white border" style={{ borderColor: "#D9D0BA" }}>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-bold text-lg" style={{ color: "#232323" }}>{editingId ? "تعديل القطعة" : "قطعة جديدة"}</h2>
+              <button type="button" onClick={resetForm}><X size={18} color="#8A8272" /></button>
+            </div>
+            {/* Image upload section (remains same) */}
+            <div className="mb-4">
+              <span className="block text-xs font-medium mb-1">صورة القطعة</span>
+              <div className="flex items-center gap-3">
+                <div onClick={() => fileRef.current?.click()} className="w-24 h-24 rounded-md flex items-center justify-center cursor-pointer overflow-hidden border border-dashed" style={{ borderColor: "#D9D0BA" }}>
+                  {form.image ? <img src={form.image} className="w-full h-full object-cover" /> : <ImagePlus size={22} color="#8A8272" />}
+                </div>
+                <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(e) => handleImageFile(e.target.files[0])} />
+              </div>
+            </div>
+            
+            <div className="grid sm:grid-cols-2 gap-3 mb-4">
+               <Field label="نوع الملابس *"><input required value={form.type} onChange={(e) => setForm({...form, type: e.target.value})} className="input w-full p-2 border rounded" /></Field>
+               <Field label="السعر"><input type="number" value={form.price} onChange={(e) => setForm({...form, price: e.target.value})} className="input w-full p-2 border rounded" /></Field>
+            </div>
+            <button type="submit" className="px-5 py-2.5 rounded-md font-semibold text-sm" style={{ background: "#2C4A6E", color: "#EDE7D8" }}>
+              {editingId ? "حفظ التعديلات" : "إضافة إلى المخزون"}
+            </button>
+          </form>
+        )}
+
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filtered.map((it) => (
+             <div key={it.id} className="rounded-lg overflow-hidden bg-white border shadow-sm p-4">
+                <h3 className="font-bold">{it.type}</h3>
+                <p className="text-sm">السعر: {Number(it.price).toLocaleString()} د.ج</p>
+                <div className="flex gap-2 mt-3">
+                  <button onClick={() => toggleStatus(it)} className="text-xs text-blue-800">تبديل الحالة</button>
+                  <button onClick={() => startEdit(it)} className="text-xs text-gray-500">تعديل</button>
+                  <button onClick={() => remove(it.id)} className="text-xs text-red-600">حذف</button>
+                </div>
+             </div>
+          ))}
+        </div>
+      </main>
+    </div>
+  );
+}
+
+function StatCard({ icon, label, value, color }) {
+  return (
+    <div className="rounded-lg p-4 bg-white border" style={{ borderColor: "#D9D0BA" }}>
+      <div className="mb-2" style={{ color }}>{icon}</div>
+      <p className="text-xs mb-1" style={{ color: "#8A8272" }}>{label}</p>
+      <p className="text-xl font-extrabold" style={{ color: "#232323" }}>{value}</p>
+    </div>
+  );
+}
+
+function Field({ label, children }) {
+  return <label className="block mb-2"><span className="text-xs">{label}</span>{children}</label>;
+}
+
