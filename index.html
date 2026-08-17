@@ -3,15 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>YOUTH STYLE - متجر الملابس</title>
+  <title>YOUTH STYLE - سجل وتتبع المخزون</title>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <style>
     :root {
-      --primary: #111111;
-      --accent: #2563eb;
-      --bg: #f8fafc;
+      --primary: #0d233a;
+      --accent: #f5b027;
+      --bg: #f4f6f9;
       --card-bg: #ffffff;
-      --text: #1e293b;
+      --text-dark: #1e293b;
       --text-muted: #64748b;
       --border: #e2e8f0;
       --danger: #ef4444;
@@ -22,97 +22,157 @@
       box-sizing: border-box;
       margin: 0;
       padding: 0;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     }
 
     body {
       background-color: var(--bg);
-      color: var(--text);
-      padding-bottom: 60px;
+      color: var(--text-dark);
+      padding-bottom: 40px;
     }
 
+    /* Header */
     header {
       background: var(--primary);
       color: white;
-      padding: 1rem 2rem;
+      padding: 1.2rem 1rem;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
     }
 
-    .logo {
-      font-size: 1.5rem;
-      font-weight: bold;
-      letter-spacing: 2px;
-      color: #fff;
-      text-decoration: none;
-    }
-
-    .header-actions {
-      display: flex;
-      gap: 15px;
-      align-items: center;
-    }
-
-    .btn {
-      padding: 8px 16px;
-      border-radius: 6px;
+    .btn-add {
+      background: var(--accent);
+      color: var(--primary);
       border: none;
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-weight: bold;
+      font-size: 0.95rem;
       cursor: pointer;
-      font-weight: 600;
-      transition: all 0.2s;
-      display: inline-flex;
+      display: flex;
       align-items: center;
       gap: 8px;
     }
 
-    .btn-primary {
-      background: var(--accent);
-      color: white;
+    .brand-info {
+      text-align: left;
+      display: flex;
+      align-items: center;
+      gap: 12px;
     }
 
-    .btn-primary:hover {
-      background: #1d4ed8;
+    .brand-text {
+      text-align: right;
     }
 
-    .btn-outline {
-      background: transparent;
-      border: 1px solid white;
-      color: white;
+    .brand-text h1 {
+      font-size: 1.4rem;
+      font-weight: 800;
+      letter-spacing: 1px;
+      line-height: 1.1;
     }
 
-    .btn-danger {
-      background: var(--danger);
+    .brand-text p {
+      font-size: 0.75rem;
+      color: #94a3b8;
+      margin-top: 3px;
+    }
+
+    .logo-circle {
+      width: 45px;
+      height: 45px;
+      border: 2px solid var(--accent);
+      border-radius: 50%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.55rem;
+      font-weight: bold;
       color: white;
+      line-height: 1;
     }
 
     .container {
-      max-width: 1200px;
-      margin: 2rem auto;
-      padding: 0 1rem;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 1rem;
+    }
+
+    /* Stats Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 1.2rem;
+    }
+
+    .stat-card {
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 12px 8px;
+      text-align: center;
+      border: 1px solid var(--border);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+    }
+
+    .stat-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 6px auto;
+      font-size: 0.9rem;
+    }
+
+    .icon-box { background: #e0e7ff; color: #3730a3; }
+    .icon-check { background: #dcfce7; color: #166534; }
+    .icon-wallet { background: #fef3c7; color: #92400e; }
+
+    .stat-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+      font-weight: 600;
+    }
+
+    .stat-value {
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: var(--primary);
+    }
+
+    /* Search & Filters */
+    .search-box {
+      width: 100%;
+      padding: 12px 15px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-size: 0.9rem;
+      background: white;
+      margin-bottom: 12px;
+      outline: none;
     }
 
     .filters {
       display: flex;
-      gap: 10px;
-      overflow-x: auto;
-      padding-bottom: 10px;
-      margin-bottom: 2rem;
+      gap: 8px;
+      justify-content: flex-end;
+      margin-bottom: 1.5rem;
     }
 
     .filter-btn {
-      padding: 8px 20px;
-      background: var(--card-bg);
+      padding: 8px 18px;
+      border-radius: 8px;
       border: 1px solid var(--border);
-      border-radius: 20px;
-      white-space: nowrap;
+      background: white;
+      color: var(--text-dark);
+      font-weight: 600;
+      font-size: 0.85rem;
       cursor: pointer;
-      font-weight: 500;
-      color: var(--text-muted);
     }
 
     .filter-btn.active {
@@ -121,107 +181,34 @@
       border-color: var(--primary);
     }
 
-    .grid {
+    /* Products Grid / Empty State */
+    .products-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-      gap: 20px;
+      gap: 12px;
     }
 
-    .card {
-      background: var(--card-bg);
-      border-radius: 12px;
-      overflow: hidden;
-      border: 1px solid var(--border);
-      transition: transform 0.2s, box-shadow 0.2s;
-      position: relative;
-    }
-
-    .card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
-    }
-
-    .card-img-container {
-      width: 100%;
-      height: 280px;
-      background: #f1f5f9;
-      position: relative;
-    }
-
-    .card-img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    .card-body {
-      padding: 1rem;
-    }
-
-    .card-type {
-      font-size: 0.8rem;
+    .empty-state {
+      text-align: center;
+      padding: 3rem 1rem;
       color: var(--text-muted);
-      text-transform: uppercase;
-      font-weight: 600;
     }
 
-    .card-title {
-      font-size: 1.1rem;
-      margin: 5px 0;
-      font-weight: 600;
+    .empty-icon {
+      font-size: 3rem;
+      color: #cbd5e1;
+      margin-bottom: 1rem;
     }
 
-    .card-price {
-      font-size: 1.25rem;
-      font-weight: bold;
-      color: var(--primary);
-      margin-bottom: 10px;
+    .empty-text {
+      font-size: 0.95rem;
+      line-height: 1.5;
     }
 
-    .sizes-list {
-      display: flex;
-      gap: 5px;
-      flex-wrap: wrap;
-      margin-bottom: 15px;
-    }
-
-    .size-tag {
-      font-size: 0.75rem;
-      padding: 2px 8px;
-      background: #f1f5f9;
-      border-radius: 4px;
-      border: 1px solid var(--border);
-    }
-
-    .status-badge {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      padding: 4px 10px;
-      border-radius: 20px;
-      font-size: 0.75rem;
-      font-weight: bold;
-      color: white;
-    }
-
-    .status-available { background: var(--success); }
-    .status-out { background: var(--danger); }
-
-    .admin-controls {
-      display: flex;
-      gap: 5px;
-      margin-top: 10px;
-      padding-top: 10px;
-      border-top: 1px solid var(--border);
-    }
-
+    /* Modal */
     .modal {
       display: none;
       position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
+      top: 0; left: 0; width: 100%; height: 100%;
       background: rgba(0,0,0,0.5);
       z-index: 1000;
       align-items: center;
@@ -230,124 +217,118 @@
 
     .modal-content {
       background: white;
-      padding: 2rem;
+      padding: 1.5rem;
       border-radius: 12px;
       width: 90%;
-      max-width: 500px;
-      max-height: 90vh;
-      overflow-y: auto;
+      max-width: 400px;
     }
 
-    .form-group {
-      margin-bottom: 1rem;
-    }
+    .form-group { margin-bottom: 1rem; }
+    .form-group label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 0.85rem; }
+    .form-control { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; }
 
-    .form-group label {
-      display: block;
-      margin-bottom: 5px;
-      font-weight: 600;
-    }
-
-    .form-control {
-      width: 100%;
-      padding: 10px;
+    .product-card {
+      background: white;
       border: 1px solid var(--border);
-      border-radius: 6px;
-    }
-
-    .loading-overlay {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(255,255,255,0.8);
-      z-index: 2000;
-      justify-content: center;
+      border-radius: 10px;
+      padding: 12px;
+      display: flex;
+      gap: 12px;
       align-items: center;
-      font-weight: bold;
     }
+    .product-img {
+      width: 60px; height: 60px; border-radius: 8px; object-fit: cover; background: #f1f5f9;
+    }
+    .product-details { flex: 1; }
+    .product-title { font-weight: bold; font-size: 0.95rem; }
+    .product-sub { font-size: 0.8rem; color: var(--text-muted); }
+    .product-price { font-weight: bold; color: var(--success); margin-top: 4px; }
   </style>
 </head>
 <body>
 
-  <div id="loading" class="loading-overlay">
-    <i class="fas fa-spinner fa-spin fa-2x"></i> &nbsp; جاري التحميل...
-  </div>
-
+  <!-- Header -->
   <header>
-    <a href="#" class="logo">YOUTH STYLE</a>
-    <div class="header-actions">
-      <button class="btn btn-outline" id="adminToggleBtn" onclick="toggleAdminMode()">
-        <i class="fas fa-lock"></i> لوحة التحكم
-      </button>
-      <button class="btn btn-primary" id="addBtn" style="display: none;" onclick="openModal()">
-        <i class="fas fa-plus"></i> إضافة منتج
-      </button>
+    <button class="btn-add" onclick="openModal()">
+      <i class="fas fa-plus"></i> إضافة قطعة
+    </button>
+    <div class="brand-info">
+      <div class="brand-text">
+        <h1>YOUTH STYLE</h1>
+        <p>سجل وتتبع المخزون</p>
+      </div>
+      <div class="logo-circle">
+        <span>YOUTH</span>
+        <span>STYLE</span>
+      </div>
     </div>
   </header>
 
   <div class="container">
-    <div class="filters" id="categoryFilters">
-      <button class="filter-btn active" onclick="filterCategory('all', this)">الكل</button>
-      <button class="filter-btn" onclick="filterCategory('قميص', this)">قمصان</button>
-      <button class="filter-btn" onclick="filterCategory('سروال', this)">سراويل</button>
-      <button class="filter-btn" onclick="filterCategory('حذاء', this)">أحذية</button>
-      <button class="filter-btn" onclick="filterCategory('سترة', this)">سترات</button>
+    <!-- Stats Cards -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon icon-box"><i class="fas fa-box"></i></div>
+        <div class="stat-label">إجمالي القطع</div>
+        <div class="stat-value" id="totalCount">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon icon-check"><i class="fas fa-check-circle"></i></div>
+        <div class="stat-label">متوفرة</div>
+        <div class="stat-value" id="availableCount">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon icon-wallet"><i class="fas fa-wallet"></i></div>
+        <div class="stat-label">قيمة المتوفر (د.ج)</div>
+        <div class="stat-value" id="totalValue">0</div>
+      </div>
     </div>
 
-    <div class="grid" id="productsGrid"></div>
+    <!-- Search input -->
+    <input type="text" class="search-box" id="searchInput" placeholder="ابحث عن نوع أو وصف..." oninput="renderData()">
+
+    <!-- Filter Buttons -->
+    <div class="filters">
+      <button class="filter-btn active" onclick="setFilter('الكل', this)">الكل</button>
+      <button class="filter-btn" onclick="setFilter('متوفر', this)">متوفر</button>
+      <button class="filter-btn" onclick="setFilter('مباع', this)">مباع</button>
+    </div>
+
+    <!-- Products List / Empty Area -->
+    <div id="productsGrid" class="products-grid"></div>
   </div>
 
-  <!-- Modal -->
-  <div class="modal" id="productModal">
+  <!-- Add Item Modal -->
+  <div class="modal" id="itemModal">
     <div class="modal-content">
-      <h2 id="modalTitle" style="margin-bottom: 1.5rem;">إضافة منتج جديد</h2>
-      <form id="productForm" onsubmit="handleFormSubmit(event)">
-        <input type="hidden" id="productId">
-        
+      <h3 style="margin-bottom: 1rem;">إضافة قطعة جديدة</h3>
+      <form onsubmit="handleSave(event)">
         <div class="form-group">
-          <label>نوع القطعة</label>
-          <select class="form-control" id="productType" required>
-            <option value="قميص">قميص</option>
-            <option value="سروال">سروال</option>
-            <option value="حذاء">حذاء</option>
-            <option value="سترة">سترة</option>
-          </select>
+          <label>الوصف / اسم القطعة</label>
+          <input type="text" id="pDesc" class="form-control" required>
         </div>
-
         <div class="form-group">
-          <label>الوصف / اسم المنتج</label>
-          <input type="text" class="form-control" id="productDesc" required>
+          <label>النوع</label>
+          <input type="text" id="pType" class="form-control" placeholder="قميص، سروال..." required>
         </div>
-
         <div class="form-group">
           <label>السعر (د.ج)</label>
-          <input type="number" class="form-control" id="productPrice" required>
+          <input type="number" id="pPrice" class="form-control" required>
         </div>
-
         <div class="form-group">
           <label>الحالة</label>
-          <select class="form-control" id="productStatus" required>
+          <select id="pStatus" class="form-control">
             <option value="متوفر">متوفر</option>
-            <option value="غير متوفر">غير متوفر</option>
+            <option value="مباع">مباع</option>
           </select>
         </div>
-
         <div class="form-group">
-          <label>المقاسات المتاحة (افصل بينها بـ مفتاح Enter أو comma)</label>
-          <input type="text" class="form-control" id="productSizes" placeholder="مثال: S, M, L, XL">
+          <label>رابط الصورة</label>
+          <input type="url" id="pImg" class="form-control">
         </div>
-
-        <div class="form-group">
-          <label>رابط الصورة (URL)</label>
-          <input type="url" class="form-control" id="productImage" placeholder="https://example.com/image.jpg">
-        </div>
-
-        <div style="display: flex; gap: 10px; margin-top: 1.5rem;">
-          <button type="submit" class="btn btn-primary" style="flex: 1;">حفظ</button>
-          <button type="button" class="btn btn-outline" style="color: var(--text);" onclick="closeModal()">إلغاء</button>
+        <div style="display: flex; gap: 8px; margin-top: 1rem;">
+          <button type="submit" class="btn-add" style="flex: 1; justify-content: center;">حفظ</button>
+          <button type="button" onclick="closeModal()" class="filter-btn" style="flex: 1;">إلغاء</button>
         </div>
       </form>
     </div>
@@ -355,174 +336,103 @@
 
   <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbzyzl-JUXOmxMeDZxzn00ygPV3pyYAL6qcNGNRBbpetwuqU8Gew2wGnxU-zXCV_xkNMoQ/exec";
-    
-    let products = [];
-    let isAdmin = false;
-    let currentCategory = 'all';
+    let allItems = [];
+    let currentFilter = 'الكل';
 
-    async function fetchProducts() {
-      showLoading(true);
+    async function fetchData() {
       try {
-        const response = await fetch(API_URL);
-        products = await response.json();
-        renderProducts();
-      } catch (error) {
-        alert("حدث خطأ أثناء جلب البيانات من السيرفر!");
-        console.error(error);
-      } finally {
-        showLoading(false);
+        const res = await fetch(API_URL);
+        allItems = await res.json();
+        renderData();
+      } catch (e) {
+        console.error(e);
       }
     }
 
-    function renderProducts() {
-      const grid = document.getElementById("productsGrid");
-      grid.innerHTML = "";
+    function renderData() {
+      const search = document.getElementById("searchInput").value.toLowerCase();
+      
+      const filtered = allItems.filter(item => {
+        const matchesFilter = currentFilter === 'الكل' || item.status === currentFilter;
+        const matchesSearch = (item.desc || '').toLowerCase().includes(search) || (item.type || '').toLowerCase().includes(search);
+        return matchesFilter && matchesSearch;
+      });
 
-      const filtered = currentCategory === 'all' 
-        ? products 
-        : products.filter(p => p.type === currentCategory);
+      // Update Stats
+      document.getElementById("totalCount").innerText = allItems.length;
+      const availableItems = allItems.filter(i => i.status === "متوفر");
+      document.getElementById("availableCount").innerText = availableItems.length;
+      const totalVal = availableItems.reduce((acc, i) => acc + Number(i.price || 0), 0);
+      document.getElementById("totalValue").innerText = totalVal;
 
-      filtered.forEach(p => {
-        const isAvailable = p.status === "متوفر";
-        const sizesArr = Array.isArray(p.sizes) ? p.sizes : [];
+      const container = document.getElementById("productsGrid");
+      container.innerHTML = "";
 
-        const card = document.createElement("div");
-        card.className = "card";
-        card.innerHTML = `
-          <div class="card-img-container">
-            <span class="status-badge ${isAvailable ? 'status-available' : 'status-out'}">${p.status}</span>
-            <img src="${p.image || 'https://via.placeholder.com/300x300?text=No+Image'}" class="card-img" alt="${p.desc}">
-          </div>
-          <div class="card-body">
-            <div class="card-type">${p.type}</div>
-            <div class="card-title">${p.desc}</div>
-            <div class="card-price">${p.price} د.ج</div>
-            <div class="sizes-list">
-              ${sizesArr.map(s => `<span class="size-tag">${s}</span>`).join('')}
-            </div>
-            ${isAdmin ? `
-              <div class="admin-controls">
-                <button class="btn btn-outline" style="color: var(--text); padding: 4px 8px; font-size: 0.8rem;" onclick="editProduct('${p.id}')"><i class="fas fa-edit"></i> تعديل</button>
-                <button class="btn btn-danger" style="padding: 4px 8px; font-size: 0.8rem;" onclick="deleteProduct('${p.id}')"><i class="fas fa-trash"></i> حذف</button>
-              </div>
-            ` : ''}
+      if (filtered.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon"><i class="fas fa-tag"></i></div>
+            <div class="empty-text">لا توجد قطع بعد. أضف أول قطعة لمخزون Youth Style.</div>
           </div>
         `;
-        grid.appendChild(card);
+        return;
+      }
+
+      filtered.forEach(item => {
+        const div = document.createElement("div");
+        div.className = "product-card";
+        div.innerHTML = `
+          <img src="${item.image || 'https://via.placeholder.com/60'}" class="product-img">
+          <div class="product-details">
+            <div class="product-title">${item.desc}</div>
+            <div class="product-sub">${item.type} - ${item.status}</div>
+            <div class="product-price">${item.price} د.ج</div>
+          </div>
+          <button onclick="deleteItem('${item.id}')" style="background:none; border:none; color:var(--danger); cursor:pointer;">
+            <i class="fas fa-trash"></i>
+          </button>
+        `;
+        container.appendChild(div);
       });
     }
 
-    function filterCategory(cat, btn) {
-      currentCategory = cat;
+    function setFilter(filter, btn) {
+      currentFilter = filter;
       document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
-      renderProducts();
+      renderData();
     }
 
-    function toggleAdminMode() {
-      if (!isAdmin) {
-        const pass = prompt("أدخل كلمة المرور للوحة التحكم:");
-        if (pass === "1234") { // يمكنك تغيير كلمة المرور هنا
-          isAdmin = true;
-          document.getElementById("addBtn").style.display = "inline-flex";
-          document.getElementById("adminToggleBtn").innerHTML = `<i class="fas fa-unlock"></i> الخروج من التحكم`;
-        } else if (pass !== null) {
-          alert("كلمة المرور خاطئة!");
-        }
-      } else {
-        isAdmin = false;
-        document.getElementById("addBtn").style.display = "none";
-        document.getElementById("adminToggleBtn").innerHTML = `<i class="fas fa-lock"></i> لوحة التحكم`;
-      }
-      renderProducts();
-    }
+    function openModal() { document.getElementById("itemModal").style.display = "flex"; }
+    function closeModal() { document.getElementById("itemModal").style.display = "none"; }
 
-    function openModal(item = null) {
-      const modal = document.getElementById("productModal");
-      const title = document.getElementById("modalTitle");
-
-      if (item) {
-        title.innerText = "تعديل المنتج";
-        document.getElementById("productId").value = item.id;
-        document.getElementById("productType").value = item.type;
-        document.getElementById("productDesc").value = item.desc;
-        document.getElementById("productPrice").value = item.price;
-        document.getElementById("productStatus").value = item.status;
-        document.getElementById("productSizes").value = (item.sizes || []).join(', ');
-        document.getElementById("productImage").value = item.image || '';
-      } else {
-        title.innerText = "إضافة منتج جديد";
-        document.getElementById("productForm").reset();
-        document.getElementById("productId").value = "";
-      }
-      modal.style.display = "flex";
-    }
-
-    function closeModal() {
-      document.getElementById("productModal").style.display = "none";
-    }
-
-    function editProduct(id) {
-      const item = products.find(p => String(p.id) === String(id));
-      if (item) openModal(item);
-    }
-
-    async function handleFormSubmit(e) {
+    async function handleSave(e) {
       e.preventDefault();
-      closeModal();
-      showLoading(true);
-
-      const id = document.getElementById("productId").value || Date.now().toString();
-      const type = document.getElementById("productType").value;
-      const desc = document.getElementById("productDesc").value;
-      const price = document.getElementById("productPrice").value;
-      const status = document.getElementById("productStatus").value;
-      const sizesRaw = document.getElementById("productSizes").value;
-      const image = document.getElementById("productImage").value;
-
-      const sizes = sizesRaw.split(',').map(s => s.trim()).filter(s => s.length > 0);
-
       const payload = {
         action: "save",
-        item: { id, type, desc, price, status, sizes, image }
+        item: {
+          id: Date.now().toString(),
+          desc: document.getElementById("pDesc").value,
+          type: document.getElementById("pType").value,
+          price: document.getElementById("pPrice").value,
+          status: document.getElementById("pStatus").value,
+          image: document.getElementById("pImg").value
+        }
       };
 
-      try {
-        await fetch(API_URL, {
-          method: "POST",
-          body: JSON.stringify(payload)
-        });
-        await fetchProducts();
-      } catch (err) {
-        alert("فشل التحديث!");
-        console.error(err);
-        showLoading(false);
+      closeModal();
+      await fetch(API_URL, { method: "POST", body: JSON.stringify(payload) });
+      fetchData();
+    }
+
+    async function deleteItem(id) {
+      if (confirm("هل تريد الحذف؟")) {
+        await fetch(API_URL, { method: "POST", body: JSON.stringify({ action: "delete", id }) });
+        fetchData();
       }
     }
 
-    async function deleteProduct(id) {
-      if (!confirm("هل أنت تأكد من نقل أو حذف هذا المنتج؟")) return;
-
-      showLoading(true);
-      try {
-        await fetch(API_URL, {
-          method: "POST",
-          body: JSON.stringify({ action: "delete", id })
-        });
-        await fetchProducts();
-      } catch (err) {
-        alert("فشل الحذف!");
-        console.error(err);
-        showLoading(false);
-      }
-    }
-
-    function showLoading(show) {
-      document.getElementById("loading").style.display = show ? "flex" : "none";
-    }
-
-    // التشغيل التلقائي عند فتح الصفحة
-    fetchProducts();
+    fetchData();
   </script>
 </body>
 </html>
