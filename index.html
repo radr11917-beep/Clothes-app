@@ -202,6 +202,7 @@
     .product-details { flex: 1; text-align: right; }
     .product-title { font-weight: bold; font-size: 0.95rem; }
     .product-sub { font-size: 0.8rem; color: var(--text-muted); margin-top: 2px; }
+    
     .size-badge {
       display: inline-block;
       background: #e2e8f0;
@@ -210,8 +211,8 @@
       border-radius: 4px;
       font-weight: bold;
       font-size: 0.75rem;
-      margin-right: 4px;
     }
+
     .product-price { font-weight: bold; color: var(--success); margin-top: 4px; }
     
     .badge-out {
@@ -455,17 +456,17 @@
         
         <div class="form-group">
           <label>الوصف / اسم القطعة</label>
-          <input type="text" id="pDesc" class="form-control" placeholder="مثال: تيشرت أوفر سايز" required>
+          <input type="text" id="pDesc" class="form-control" placeholder="مثال: حذاء رياضي" required>
         </div>
 
         <div class="form-row">
           <div class="form-group">
             <label>النوع</label>
-            <input type="text" id="pType" class="form-control" placeholder="قميص، سروال..." required>
+            <input type="text" id="pType" class="form-control" placeholder="حذاء، قميص..." required>
           </div>
           <div class="form-group">
             <label>المقاس (Size)</label>
-            <input type="text" id="pSize" class="form-control" placeholder="M, L, XL, 42..." required>
+            <input type="text" id="pSize" class="form-control" placeholder="42, M, XL..." required>
           </div>
         </div>
 
@@ -524,7 +525,8 @@
       try {
         const res = await fetch(API_URL + "?t=" + new Date().getTime());
         const data = await res.json();
-        allItems = Array.isArray(data) ? data : [];
+        // فلترة صارمة لمنع ظهور أي صفوف فارغة أو بدون اسم
+        allItems = Array.isArray(data) ? data.filter(item => item.desc && item.desc.toString().trim() !== "" && item.desc !== "undefined") : [];
         renderData();
       } catch (e) {
         console.error("Error fetching data:", e);
@@ -674,133 +676,4 @@
             const canvas = document.createElement('canvas');
             const maxWidth = 160;
             const scaleSize = maxWidth / img.width;
-            
-            canvas.width = maxWidth;
-            canvas.height = img.height * scaleSize;
-
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-            base64Image = canvas.toDataURL('image/jpeg', 0.5);
-
-            const preview = document.getElementById("imgPreview");
-            preview.src = base64Image;
-            preview.style.display = "block";
-            document.getElementById("fileLabel").innerHTML = `<i class="fas fa-check"></i> تم اختيار الصورة بنجاح`;
-          };
-          img.src = e.target.result;
-        };
-        reader.readAsDataURL(file);
-      }
-    }
-
-    function sendDataToGoogle(payload) {
-      return fetch(API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "text/plain;charset=utf-8" },
-        redirect: "follow",
-        body: JSON.stringify(payload)
-      });
-    }
-
-    async function handleFormSubmit(e) {
-      e.preventDefault();
-      const saveBtn = document.getElementById("btnSave");
-      saveBtn.disabled = true;
-      saveBtn.innerText = "جاري الحفظ...";
-
-      const existingId = document.getElementById("pId").value;
-      const qtyVal = Number(document.getElementById("pQty").value);
-
-      const itemData = {
-        id: existingId ? existingId : Date.now().toString(),
-        desc: document.getElementById("pDesc").value,
-        type: document.getElementById("pType").value,
-        size: document.getElementById("pSize").value,
-        price: document.getElementById("pPrice").value,
-        qty: qtyVal,
-        status: qtyVal > 0 ? "متوفر" : "منتهي",
-        image: base64Image
-      };
-
-      if (existingId) {
-        const index = allItems.findIndex(i => i.id.toString() === existingId.toString());
-        if (index > -1) allItems[index] = itemData;
-      } else {
-        allItems.unshift(itemData);
-      }
-
-      renderData();
-      closeModal();
-
-      try {
-        await sendDataToGoogle({ action: "save", item: itemData });
-      } catch (err) {
-        console.error("Save error:", err);
-      }
-    }
-
-    async function addPiece(id) {
-      const item = allItems.find(i => i.id.toString() === id.toString());
-      if (item) {
-        let currentQty = Number(item.qty || 0);
-        currentQty += 1;
-        item.qty = currentQty;
-        item.status = "متوفر";
-        renderData();
-
-        try {
-          await sendDataToGoogle({ action: "save", item: item });
-        } catch (err) {
-          console.error("Update error:", err);
-        }
-      }
-    }
-
-    async function sellPiece(id) {
-      const item = allItems.find(i => i.id.toString() === id.toString());
-      if (item) {
-        let currentQty = Number(item.qty || 1);
-        if (currentQty > 0) {
-          currentQty -= 1;
-          item.qty = currentQty;
-          if (currentQty === 0) item.status = "منتهي";
-          renderData();
-
-          try {
-            await sendDataToGoogle({ action: "save", item: item });
-          } catch (err) {
-            console.error("Update error:", err);
-          }
-        }
-      }
-    }
-
-    function promptDelete(id) {
-      itemToDeleteId = id;
-      document.getElementById("deleteModal").style.display = "flex";
-    }
-
-    function closeDeleteModal() {
-      itemToDeleteId = null;
-      document.getElementById("deleteModal").style.display = "none";
-    }
-
-    document.getElementById("confirmDeleteBtn").onclick = async function() {
-      if (!itemToDeleteId) return;
-      const id = itemToDeleteId;
-      closeDeleteModal();
-
-      allItems = allItems.filter(i => i.id.toString() !== id.toString());
-      renderData();
-
-      try {
-        await sendDataToGoogle({ action: "delete", id: id });
-      } catch (err) {
-        console.error("Delete error:", err);
-      }
-    };
-
-    fetchData();
-  </script>
-</body>
-</html>
+     
