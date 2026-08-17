@@ -26,7 +26,7 @@
     .container { max-width: 600px; margin: 0 auto; padding: 1rem; }
     
     /* الإحصائيات */
-    .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 1.2rem; }
+    .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 1.2rem; }
     .stat-card { background: var(--card-bg); border-radius: 10px; padding: 10px; text-align: center; border: 1px solid #e2e8f0; }
     .stat-value { font-size: 0.95rem; font-weight: bold; color: var(--primary); }
     
@@ -39,8 +39,6 @@
     .btn-action { padding: 6px 12px; border-radius: 6px; cursor: pointer; border: none; font-weight: bold; }
     .btn-sell { background: #d1fae5; color: #065f46; }
     .btn-add { background: #e0f2fe; color: #0369a1; }
-    .badge-out { color: var(--danger); font-weight: bold; background: #fee2e2; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; }
-    
     .modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; padding: 20px; }
     .modal-content { background: white; padding: 1.5rem; border-radius: 16px; width: 100%; max-width: 400px; }
     .form-control { width: 100%; padding: 10px; margin: 5px 0 15px 0; border: 1px solid #ddd; border-radius: 8px; }
@@ -62,18 +60,14 @@
   <div id="mainApp">
     <header>
       <div><h1 style="font-size:1.2rem;">YOUTH STYLE</h1><p id="roleTitle" style="font-size:0.7rem;"></p></div>
-      <div style="display:flex; gap:8px;">
-        <button class="btn-add" id="btnAddMain" onclick="openAddModal()"><i class="fas fa-plus"></i></button>
-        <button class="btn-action" style="background:rgba(255,255,255,0.2); color:white;" onclick="lockApp()"><i class="fas fa-lock"></i></button>
-      </div>
+      <button class="btn-add" id="btnAddMain" onclick="openAddModal()"><i class="fas fa-plus"></i></button>
     </header>
 
     <div class="container">
       <div class="stats-grid" id="statsGrid">
         <div class="stat-card"><div class="stat-label">إجمالي القطع</div><div class="stat-value" id="totalCount">0</div></div>
         <div class="stat-card"><div class="stat-label">متوفرة</div><div class="stat-value" id="availableCount">0</div></div>
-        <div class="stat-card"><div class="stat-label">قيمة المخزون</div><div class="stat-value" id="totalValue">0</div></div>
-        <div class="stat-card"><div class="stat-label">الربح المتوقع</div><div class="stat-value" id="totalProfit">0</div></div>
+        <div class="stat-card"><div class="stat-label">القيمة (د.ج)</div><div class="stat-value" id="totalValue">0</div></div>
       </div>
 
       <div id="productsGrid" class="products-grid"></div>
@@ -85,7 +79,7 @@
       <div id="modalTitle" style="font-weight:bold; margin-bottom:15px;">إضافة قطعة</div>
       <input type="hidden" id="pId"><input type="text" id="pDesc" class="form-control" placeholder="الوصف">
       <div style="display:flex; gap:10px;"><input type="text" id="pType" class="form-control" placeholder="النوع"><input type="text" id="pSize" class="form-control" placeholder="المقاس"></div>
-      <div style="display:flex; gap:10px;"><input type="number" id="pBuyPrice" class="form-control" placeholder="سعر الشراء"><input type="number" id="pSellPrice" class="form-control" placeholder="سعر البيع"></div>
+      <div style="display:flex; gap:10px;"><input type="number" id="pBuyPrice" class="form-control" placeholder="شراء"><input type="number" id="pSellPrice" class="form-control" placeholder="بيع"></div>
       <input type="number" id="pQty" class="form-control" placeholder="الكمية">
       <button class="btn-unlock" onclick="handleFormSubmit()">حفظ</button>
       <button class="btn-action" style="width:100%; margin-top:10px;" onclick="closeModal()">إلغاء</button>
@@ -103,13 +97,13 @@
       const p = document.getElementById("pinInput").value.trim();
       if (p === ADMIN_PIN) { userRole = "admin"; initApp(); }
       else if (p === VIEWER_PIN) { userRole = "viewer"; initApp(); }
-      else document.getElementById("lockError").innerText = "الرمز السري غير صحيح";
+      else document.getElementById("lockError").innerText = "رمز خطأ";
     }
 
     function initApp() {
       document.getElementById("lockScreen").style.display = "none";
       document.getElementById("mainApp").style.display = "block";
-      document.getElementById("roleTitle").innerText = userRole === "admin" ? "لوحة المدير" : "سجل المبيعات";
+      document.getElementById("roleTitle").innerText = userRole === "admin" ? "لوحة المدير" : "وضع العرض فقط";
       document.getElementById("btnAddMain").style.display = userRole === "admin" ? "block" : "none";
       document.getElementById("statsGrid").style.display = userRole === "admin" ? "grid" : "none";
       fetchData();
@@ -118,7 +112,7 @@
     async function fetchData() {
       const res = await fetch(API_URL + "?t=" + new Date().getTime());
       const data = await res.json();
-      allItems = Array.isArray(data) ? data : (data.items || []);
+      allItems = data;
       renderData();
     }
 
@@ -126,38 +120,21 @@
       const grid = document.getElementById("productsGrid");
       grid.innerHTML = "";
       allItems.forEach(item => {
-        const qty = Number(item.qty || 0);
-        const buy = Number(item.buyPrice || 0);
-        const sell = Number(item.sellPrice || 0);
-        const profit = sell - buy;
-        const isOutOfStock = qty <= 0;
-
         const div = document.createElement("div");
         div.className = "product-card";
         div.innerHTML = `
           <img src="${item.image || 'https://via.placeholder.com/70'}" class="product-img">
           <div class="product-details">
-            <div style="font-weight:bold;">${item.desc || ''}</div>
-            <div style="font-size:0.8rem; color:gray;">${item.type || ''} | مقاس: ${item.size || ''}</div>
-            <div style="font-size:0.8rem; margin-top:2px;">
-              ${isOutOfStock ? '<span class="badge-out">منتهي (Out of stock)</span>' : `الكمية المتوفرة: <strong>${qty}</strong>`}
-            </div>
-            ${userRole === 'admin' ? `
-              <div style="font-size:0.8rem; margin-top:4px;">
-                <span style="color:gray;">شراء: ${buy} د.ج</span> | 
-                <span style="color:var(--success); font-weight:bold;">بيع: ${sell} د.ج</span> | 
-                <span style="color:var(--profit); font-weight:bold;">ربح: ${profit} د.ج</span>
-              </div>
-            ` : `
-              <div class="product-price">${sell} د.ج</div>
-            `}
+            <div style="font-weight:bold;">${item.desc}</div>
+            <div style="font-size:0.8rem; color:gray;">${item.type} | مقاس: ${item.size}</div>
+            ${userRole === 'admin' ? `<div style="font-size:0.8rem;">الكمية: ${item.qty}</div>` : `<div style="font-size:0.8rem;">الكمية المتوفرة: ${item.qty}</div>`}
+            <div class="product-price">${item.sellPrice} د.ج</div>
           </div>
-          <div class="action-btns" style="display:flex; flex-direction:column; gap:5px;">
-            <div style="display:flex; gap:5px;">
-              <button class="btn-action btn-sell" onclick="updateQty('${item.id}', -1)" ${isOutOfStock ? 'disabled style="opacity:0.3; cursor:not-allowed;"' : ''}>بيع (-)</button>
-              ${userRole === 'admin' ? `<button class="btn-action btn-add" onclick="updateQty('${item.id}', 1)">+</button>` : ''}
-            </div>
-          </div>
+          ${userRole === 'admin' ? `
+            <div class="action-btns">
+              <button class="btn-action btn-sell" onclick="updateQty('${item.id}', -1)">-</button>
+              <button class="btn-action btn-add" onclick="updateQty('${item.id}', 1)">+</button>
+            </div>` : `<div class="action-btns"><button class="btn-action btn-sell" onclick="updateQty('${item.id}', -1)">بيع</button></div>`}
         `;
         grid.appendChild(div);
       });
@@ -167,35 +144,31 @@
     async function updateQty(id, change) {
       const item = allItems.find(i => i.id == id);
       if(!item) return;
-      item.qty = Number(item.qty || 0) + change;
+      item.qty = Number(item.qty) + change;
       if(item.qty < 0) item.qty = 0;
-      item.status = item.qty > 0 ? "متوفر" : "منتهي";
       renderData();
       await fetch(API_URL, {method:"POST", body: JSON.stringify({action:"save", item:item})});
     }
 
     function updateStats() {
-      const total = allItems.reduce((a, b) => a + Number(b.qty || 0), 0);
+      const total = allItems.reduce((a, b) => a + Number(b.qty), 0);
       document.getElementById("totalCount").innerText = total;
-      document.getElementById("availableCount").innerText = allItems.filter(i => Number(i.qty || 0) > 0).length;
-      document.getElementById("totalValue").innerText = allItems.reduce((a, b) => a + (Number(b.sellPrice || 0) * Number(b.qty || 0)), 0);
-      document.getElementById("totalProfit").innerText = allItems.reduce((a, b) => a + ((Number(b.sellPrice || 0) - Number(b.buyPrice || 0)) * Number(b.qty || 0)), 0);
+      document.getElementById("availableCount").innerText = allItems.filter(i => i.qty > 0).length;
+      document.getElementById("totalValue").innerText = allItems.reduce((a, b) => a + (Number(b.sellPrice) * Number(b.qty)), 0);
     }
 
     function lockApp() { location.reload(); }
     function openAddModal() { document.getElementById("itemModal").style.display = "flex"; }
     function closeModal() { document.getElementById("itemModal").style.display = "none"; }
-    
     async function handleFormSubmit() {
         const item = {
             id: Date.now(),
             desc: document.getElementById("pDesc").value,
             type: document.getElementById("pType").value,
             size: document.getElementById("pSize").value,
-            buyPrice: Number(document.getElementById("pBuyPrice").value) || 0,
-            sellPrice: Number(document.getElementById("pSellPrice").value) || 0,
-            qty: Number(document.getElementById("pQty").value) || 0,
-            status: Number(document.getElementById("pQty").value) > 0 ? "متوفر" : "منتهي"
+            buyPrice: document.getElementById("pBuyPrice").value,
+            sellPrice: document.getElementById("pSellPrice").value,
+            qty: document.getElementById("pQty").value
         };
         await fetch(API_URL, {method:"POST", body: JSON.stringify({action:"save", item:item})});
         location.reload();
