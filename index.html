@@ -4,15 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>YOUTH STYLE - سجل وتتبع المخزون</title>
-
-  <!-- أيقونة وشعار التطبيق لشاشة الهاتف والويب -->
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='48' fill='%230d233a' stroke='%23f5b027' stroke-width='4'/><text x='50%' y='45%' text-anchor='middle' fill='%23f5b027' font-size='18' font-family='sans-serif' font-weight='bold'>YOUTH</text><text x='50%' y='68%' text-anchor='middle' fill='%23ffffff' font-size='18' font-family='sans-serif' font-weight='bold'>STYLE</text></svg>">
-  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%230d233a'/><circle cx='50' cy='50' r='42' fill='%230d233a' stroke='%23f5b027' stroke-width='3'/><text x='50%' y='45%' text-anchor='middle' fill='%23f5b027' font-size='16' font-family='sans-serif' font-weight='bold'>YOUTH</text><text x='50%' y='68%' text-anchor='middle' fill='%23ffffff' font-size='16' font-family='sans-serif' font-weight='bold'>STYLE</text></svg>">
-  <meta name="theme-color" content="#0d233a">
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Youth Style">
-
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <style>
     :root {
@@ -40,6 +31,75 @@
       color: var(--text-dark);
       padding-bottom: 40px;
     }
+
+    /* Lock Screen Overlay */
+    #lockScreen {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: var(--primary);
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .lock-card {
+      background: white;
+      padding: 2rem 1.5rem;
+      border-radius: 20px;
+      width: 100%;
+      max-width: 340px;
+      text-align: center;
+      box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+    }
+
+    .lock-logo {
+      width: 60px;
+      height: 60px;
+      border: 3px solid var(--accent);
+      border-radius: 50%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+      font-weight: bold;
+      color: var(--primary);
+      margin: 0 auto 15px auto;
+    }
+
+    .pin-input {
+      width: 100%;
+      padding: 12px;
+      font-size: 1.5rem;
+      text-align: center;
+      letter-spacing: 8px;
+      border: 2px solid var(--border);
+      border-radius: 10px;
+      margin: 15px 0 10px 0;
+      outline: none;
+    }
+
+    .pin-input:focus { border-color: var(--accent); }
+    .lock-error { color: var(--danger); font-size: 0.8rem; font-weight: bold; min-height: 1.2rem; }
+
+    .btn-unlock {
+      width: 100%;
+      background: var(--accent);
+      color: var(--primary);
+      border: none;
+      padding: 12px;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+    /* Main App */
+    #mainApp { display: none; }
 
     header {
       background: var(--primary);
@@ -85,11 +145,17 @@
       margin-top: 2px;
     }
 
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
     .btn-add {
       background: var(--accent);
       color: var(--primary);
       border: none;
-      padding: 10px 16px;
+      padding: 10px 14px;
       border-radius: 8px;
       font-weight: bold;
       font-size: 0.85rem;
@@ -97,6 +163,16 @@
       display: flex;
       align-items: center;
       gap: 6px;
+    }
+
+    .btn-lock {
+      background: rgba(255,255,255,0.15);
+      color: white;
+      border: none;
+      padding: 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.9rem;
     }
 
     .container {
@@ -420,55 +496,78 @@
 </head>
 <body>
 
-  <header>
-    <div class="brand-info">
-      <div class="logo-circle">
-        <span>YOUTH</span>
-        <span>STYLE</span>
-      </div>
-      <div class="brand-text">
-        <h1>YOUTH STYLE</h1>
-        <p>سجل وتتبع المخزون</p>
-      </div>
+  <!-- شاشة إدخال الرمز السري -->
+  <div id="lockScreen">
+    <div class="lock-card">
+      <div class="lock-logo"><span>YOUTH</span><span>STYLE</span></div>
+      <h2 style="color:var(--primary); font-size:1.2rem; margin-bottom:5px;">سجل المخزون</h2>
+      <p style="color:var(--text-muted); font-size:0.85rem;">أدخل الرمز السري للمتابعة</p>
+      
+      <form onsubmit="handleUnlock(event)">
+        <input type="password" id="pinInput" class="pin-input" maxlength="8" placeholder="••••" required autofocus>
+        <div id="lockError" class="lock-error"></div>
+        <button type="submit" class="btn-unlock"><i class="fas fa-lock-open"></i> فتح السجل</button>
+      </form>
     </div>
-    <button class="btn-add" onclick="openAddModal()">
-      <i class="fas fa-plus"></i> إضافة قطعة
-    </button>
-  </header>
+  </div>
 
-  <div class="container">
-    <div class="stats-grid">
-      <div class="stat-card">
-        <div class="stat-icon icon-box"><i class="fas fa-box"></i></div>
-        <div class="stat-label">القطع الكلية</div>
-        <div class="stat-value" id="totalCount">0</div>
+  <!-- الواجهة الرئيسية -->
+  <div id="mainApp">
+    <header>
+      <div class="brand-info">
+        <div class="logo-circle">
+          <span>YOUTH</span>
+          <span>STYLE</span>
+        </div>
+        <div class="brand-text">
+          <h1>YOUTH STYLE</h1>
+          <p>سجل وتتبع المخزون</p>
+        </div>
       </div>
-      <div class="stat-card">
-        <div class="stat-icon icon-check"><i class="fas fa-check-circle"></i></div>
-        <div class="stat-label">المتوفر</div>
-        <div class="stat-value" id="availableCount">0</div>
+      <div class="header-actions">
+        <button class="btn-add" onclick="openAddModal()">
+          <i class="fas fa-plus"></i> إضافة قطعة
+        </button>
+        <button class="btn-lock" onclick="lockApp()" title="قفل التطبيق">
+          <i class="fas fa-lock"></i>
+        </button>
       </div>
-      <div class="stat-card">
-        <div class="stat-icon icon-wallet"><i class="fas fa-wallet"></i></div>
-        <div class="stat-label">قيمة المخزون</div>
-        <div class="stat-value" id="totalValue">0</div>
+    </header>
+
+    <div class="container">
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon icon-box"><i class="fas fa-box"></i></div>
+          <div class="stat-label">القطع الكلية</div>
+          <div class="stat-value" id="totalCount">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon icon-check"><i class="fas fa-check-circle"></i></div>
+          <div class="stat-label">المتوفر</div>
+          <div class="stat-value" id="availableCount">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon icon-wallet"><i class="fas fa-wallet"></i></div>
+          <div class="stat-label">قيمة المخزون</div>
+          <div class="stat-value" id="totalValue">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon icon-profit"><i class="fas fa-chart-line"></i></div>
+          <div class="stat-label">الربح المتوقع</div>
+          <div class="stat-value" id="totalProfit">0</div>
+        </div>
       </div>
-      <div class="stat-card">
-        <div class="stat-icon icon-profit"><i class="fas fa-chart-line"></i></div>
-        <div class="stat-label">الربح المتوقع</div>
-        <div class="stat-value" id="totalProfit">0</div>
+
+      <input type="text" class="search-box" id="searchInput" placeholder="ابحث عن نوع، وصف، أو مقاس..." oninput="renderData()">
+
+      <div class="filters">
+        <button class="filter-btn active" onclick="setFilter('الكل', this)">الكل</button>
+        <button class="filter-btn" onclick="setFilter('متوفر', this)">متوفر</button>
+        <button class="filter-btn" onclick="setFilter('منتهي', this)">منتهي (Out of stock)</button>
       </div>
+
+      <div id="productsGrid" class="products-grid"></div>
     </div>
-
-    <input type="text" class="search-box" id="searchInput" placeholder="ابحث عن نوع، وصف، أو مقاس..." oninput="renderData()">
-
-    <div class="filters">
-      <button class="filter-btn active" onclick="setFilter('الكل', this)">الكل</button>
-      <button class="filter-btn" onclick="setFilter('متوفر', this)">متوفر</button>
-      <button class="filter-btn" onclick="setFilter('منتهي', this)">منتهي (Out of stock)</button>
-    </div>
-
-    <div id="productsGrid" class="products-grid"></div>
   </div>
 
   <!-- Item Modal (Add & Edit) -->
@@ -543,12 +642,48 @@
   </div>
 
   <script>
+    // ===== الرمز السري والرابط =====
+    const APP_PIN = "2007"; // الرمز السري الجديد
     const API_URL = "https://script.google.com/macros/s/AKfycbxzjbhUX1FJ-1m4k2zIEaKJdi0IXlJKiMaRdffQpdfSZqRoCf5cvt4-Ei344z4EXXMqjA/exec";
     
     let allItems = [];
     let currentFilter = 'الكل';
     let base64Image = "";
     let itemToDeleteId = null;
+
+    function checkAuth() {
+      if (sessionStorage.getItem("is_unlocked") === "true") {
+        document.getElementById("lockScreen").style.display = "none";
+        document.getElementById("mainApp").style.display = "block";
+        fetchData();
+      } else {
+        document.getElementById("lockScreen").style.display = "flex";
+        document.getElementById("mainApp").style.display = "none";
+      }
+    }
+
+    function handleUnlock(e) {
+      e.preventDefault();
+      const enteredPin = document.getElementById("pinInput").value;
+      if (enteredPin === APP_PIN) {
+        sessionStorage.setItem("is_unlocked", "true");
+        document.getElementById("lockError").innerText = "";
+        document.getElementById("lockScreen").style.display = "none";
+        document.getElementById("mainApp").style.display = "block";
+        fetchData();
+      } else {
+        document.getElementById("lockError").innerText = "الرمز السري غير صحيح!";
+        document.getElementById("pinInput").value = "";
+        document.getElementById("pinInput").focus();
+      }
+    }
+
+    function lockApp() {
+      sessionStorage.removeItem("is_unlocked");
+      document.getElementById("pinInput").value = "";
+      document.getElementById("lockError").innerText = "";
+      checkAuth();
+    }
 
     async function fetchData() {
       try {
@@ -594,75 +729,4 @@
         const profitPerPiece = Number(i.sellPrice || 0) - Number(i.buyPrice || 0);
         return acc + (profitPerPiece * Number(i.qty || 0));
       }, 0);
-      document.getElementById("totalProfit").innerText = totalProfitVal;
-
-      const container = document.getElementById("productsGrid");
-      container.innerHTML = "";
-
-      if (filtered.length === 0) {
-        container.innerHTML = `
-          <div style="text-align: center; padding: 3rem 1rem; color: var(--text-muted);">
-            <i class="fas fa-tag" style="font-size: 3rem; color: #cbd5e1; margin-bottom: 1rem;"></i>
-            <div>لا توجد قطع مطابقة.</div>
-          </div>
-        `;
-        return;
-      }
-
-      filtered.forEach(item => {
-        const qty = Number(item.qty || 0);
-        const isOutOfStock = qty <= 0;
-        const buy = Number(item.buyPrice || 0);
-        const sell = Number(item.sellPrice || 0);
-        const profit = sell - buy;
-
-        const div = document.createElement("div");
-        div.className = "product-card";
-        div.innerHTML = `
-          <img src="${item.image || 'https://via.placeholder.com/70'}" class="product-img">
-          <div class="product-details">
-            <div class="product-title">${item.desc || ''}</div>
-            <div class="product-sub">
-              ${item.type || ''} 
-              ${item.size ? `| المقاس: <span class="size-badge">${item.size}</span>` : ''} 
-              | ${isOutOfStock ? '<span class="badge-out">منتهي (Out of stock)</span>' : `الكمية: <strong style="color:var(--text-dark); font-size:0.95rem;">${qty}</strong>`}
-            </div>
-            <div class="price-row">
-              <span class="buy-tag">شراء: ${buy} د.ج</span>
-              <span class="sell-tag">بيع: ${sell} د.ج</span>
-              <span class="profit-tag">الربح: ${profit} د.ج</span>
-            </div>
-          </div>
-          <div class="action-btns">
-            <div class="action-row">
-              <button onclick="addPiece('${item.id}')" class="btn-action btn-add-qty" title="تزويد المخزون (+)">
-                <i class="fas fa-plus"></i>
-              </button>
-              ${!isOutOfStock ? `
-                <button onclick="sellPiece('${item.id}')" class="btn-action btn-sell" title="بيع قطعة (-)">
-                  <i class="fas fa-minus"></i>
-                </button>
-              ` : ''}
-              <button onclick="openEditModal('${item.id}')" class="btn-action btn-edit" title="تعديل البيانات">
-                <i class="fas fa-edit"></i>
-              </button>
-            </div>
-            <button onclick="promptDelete('${item.id}')" style="background:none; border:none; color:var(--danger); cursor:pointer; padding: 4px; font-size: 0.8rem;">
-              <i class="fas fa-trash"></i> حذف
-            </button>
-          </div>
-        `;
-        container.appendChild(div);
-      });
-    }
-
-    function setFilter(filter, btn) {
-      currentFilter = filter;
-      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      renderData();
-    }
-
-    function openAddModal() {
-      document.getElementById("modalTitle").innerText = "إضافة قطعة جديدة";
-      document.getElementById
+      document.getElementById("totalProfit").innerText = totalProfi
