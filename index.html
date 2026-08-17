@@ -374,8 +374,6 @@
       cursor: pointer;
     }
 
-    .btn-save:disabled { background: #cbd5e1; cursor: not-allowed; }
-
     .btn-danger {
       flex: 1;
       background: var(--danger);
@@ -514,7 +512,7 @@
   </div>
 
   <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbzwLSVmEPHCZpnaDNpkank3inhw4EmKrEzZpzp2eKWKiTntyDMo68UXKu0l10fS49pvSg/exec";
+    const API_URL = "https://script.google.com/macros/s/AKfycbwBHMLL6B-aheeXHXdDTwdZ2o4w68-V5vCaFPF_1X7TpFbRWUBqe0Dhn6FcKAtRbRSdbQ/exec";
     
     let allItems = [];
     let currentFilter = 'الكل';
@@ -525,8 +523,12 @@
       try {
         const res = await fetch(API_URL + "?t=" + new Date().getTime());
         const data = await res.json();
-        // فلترة صارمة لمنع ظهور أي صفوف فارغة أو بدون اسم
-        allItems = Array.isArray(data) ? data.filter(item => item.desc && item.desc.toString().trim() !== "" && item.desc !== "undefined") : [];
+        allItems = Array.isArray(data) ? data.filter(item => 
+          item && 
+          item.desc && 
+          item.desc.toString().trim() !== "" && 
+          item.id
+        ) : [];
         renderData();
       } catch (e) {
         console.error("Error fetching data:", e);
@@ -629,13 +631,12 @@
       base64Image = "";
       document.getElementById("imgPreview").style.display = "none";
       document.getElementById("fileLabel").innerHTML = `<i class="fas fa-camera"></i> اختار صورة من الجهاز`;
-      document.getElementById("btnSave").disabled = false;
       document.getElementById("btnSave").innerText = "حفظ";
       document.getElementById("itemModal").style.display = "flex";
     }
 
     function openEditModal(id) {
-      const item = allItems.find(i => i.id.toString() === id.toString());
+      const item = allItems.find(i => i.id.toString().trim() === id.toString().trim());
       if (!item) return;
 
       document.getElementById("modalTitle").innerText = "تعديل بيانات القطعة";
@@ -657,7 +658,6 @@
         document.getElementById("fileLabel").innerHTML = `<i class="fas fa-camera"></i> اختار صورة من الجهاز`;
       }
 
-      document.getElementById("btnSave").disabled = false;
       document.getElementById("btnSave").innerText = "حفظ التعديل";
       document.getElementById("itemModal").style.display = "flex";
     }
@@ -676,4 +676,9 @@
             const canvas = document.createElement('canvas');
             const maxWidth = 160;
             const scaleSize = maxWidth / img.width;
-     
+            
+            canvas.width = maxWidth;
+            canvas.height = img.height * scaleSize;
+
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, canvas
