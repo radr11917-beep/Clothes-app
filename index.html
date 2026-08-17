@@ -353,6 +353,8 @@
       cursor: pointer;
     }
 
+    .btn-save:disabled { background: #cbd5e1; cursor: not-allowed; }
+
     .btn-danger {
       flex: 1;
       background: var(--danger);
@@ -484,9 +486,9 @@
     let base64Image = "";
     let itemToDeleteId = null;
 
+    // جلب البيانات مع كسر الذاكرة المؤقتة (Cache Busting)
     async function fetchData() {
       try {
-        // إضافة رقم عشوائي (Cache Busting) لمنع المتصفح من جلب بيانات قديمة
         const urlWithCacheBusting = API_URL + "?t=" + new Date().getTime();
         const res = await fetch(urlWithCacheBusting);
         const data = await res.json();
@@ -586,6 +588,7 @@
       document.getElementById("btnSave").innerText = "حفظ";
     }
 
+    // ضغط قوي جداً للصورة لتخطي رفض جوجل شيت
     function previewAndCompressImage(event) {
       const file = event.target.files[0];
       if (file) {
@@ -595,14 +598,14 @@
           img.onload = function() {
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
-            const maxWidth = 250;
+            const maxWidth = 150; // تصغير قوي
             const scaleSize = maxWidth / img.width;
             
             canvas.width = maxWidth;
             canvas.height = img.height * scaleSize;
 
             ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-            base64Image = canvas.toDataURL('image/jpeg', 0.6);
+            base64Image = canvas.toDataURL('image/jpeg', 0.4); // ضغط 40%
 
             const preview = document.getElementById("imgPreview");
             preview.src = base64Image;
@@ -615,6 +618,7 @@
       }
     }
 
+    // إضافة قطعة جديدة
     async function handleSave(e) {
       e.preventDefault();
       const saveBtn = document.getElementById("btnSave");
@@ -633,23 +637,25 @@
         image: base64Image
       };
 
-      allItems.unshift(newItem);
-      renderData();
-      closeModal();
-
       try {
-        // إضافة redirect: 'follow' لضمان نجاح الاتصال
         await fetch(API_URL, {
           method: "POST",
           headers: { "Content-Type": "text/plain;charset=utf-8" },
-          redirect: "follow",
+          redirect: "follow", // إجبار الاتصال لجوجل
           body: JSON.stringify({ action: "save", item: newItem })
         });
+        
+        await fetchData(); // تحديث القائمة لجلب البيانات المؤكدة
+        closeModal();
       } catch (err) {
         console.error("Save error:", err);
+        saveBtn.disabled = false;
+        saveBtn.innerText = "حفظ";
+        alert("حدث خطأ في الاتصال، يرجى المحاولة مرة أخرى.");
       }
     }
 
+    // تزويد الكمية
     async function addPiece(id) {
       const item = allItems.find(i => i.id.toString() === id.toString());
       if (item) {
@@ -657,6 +663,8 @@
         currentQty += 1; 
         item.qty = currentQty;
         item.status = "متوفر"; 
+        
+        // تحديث شكلي فوري للمستخدم
         renderData();
 
         try {
@@ -666,69 +674,18 @@
             redirect: "follow",
             body: JSON.stringify({ action: "save", item: item })
           });
+          await fetchData();
         } catch (err) {
           console.error("Update error:", err);
         }
       }
     }
 
+    // نقص الكمية
     async function sellPiece(id) {
       const item = allItems.find(i => i.id.toString() === id.toString());
       if (item) {
         let currentQty = Number(item.qty || 1);
         if (currentQty > 0) {
           currentQty -= 1; 
-          item.qty = currentQty;
-          if (currentQty === 0) {
-            item.status = "منتهي";
-          }
-          renderData();
-
-          try {
-            await fetch(API_URL, {
-              method: "POST",
-              headers: { "Content-Type": "text/plain;charset=utf-8" },
-              redirect: "follow",
-              body: JSON.stringify({ action: "save", item: item })
-            });
-          } catch (err) {
-            console.error("Update error:", err);
-          }
-        }
-      }
-    }
-
-    function promptDelete(id) {
-      itemToDeleteId = id;
-      document.getElementById("deleteModal").style.display = "flex";
-    }
-
-    function closeDeleteModal() {
-      itemToDeleteId = null;
-      document.getElementById("deleteModal").style.display = "none";
-    }
-
-    document.getElementById("confirmDeleteBtn").onclick = async function() {
-      if (!itemToDeleteId) return;
-      const id = itemToDeleteId;
-      closeDeleteModal();
-
-      allItems = allItems.filter(i => i.id.toString() !== id.toString());
-      renderData();
-
-      try {
-        await fetch(API_URL, {
-          method: "POST",
-          headers: { "Content-Type": "text/plain;charset=utf-8" },
-          redirect: "follow",
-          body: JSON.stringify({ action: "delete", id: id })
-        });
-      } catch (err) {
-        console.error("Delete error:", err);
-      }
-    };
-
-    fetchData();
-  </script>
-</body>
-</html>
+          item.q
