@@ -64,14 +64,9 @@
       flex-shrink: 0;
     }
 
-    .brand-text {
-      text-align: right;
-    }
-
     .brand-text h1 {
       font-size: 1.25rem;
       font-weight: 800;
-      letter-spacing: 0.5px;
       line-height: 1.1;
     }
 
@@ -93,8 +88,6 @@
       display: flex;
       align-items: center;
       gap: 6px;
-      white-space: nowrap;
-      flex-shrink: 0;
     }
 
     .container {
@@ -117,7 +110,6 @@
       padding: 12px 6px;
       text-align: center;
       border: 1px solid #e2e8f0;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.02);
     }
 
     .stat-icon {
@@ -148,7 +140,7 @@
       color: var(--primary);
     }
 
-    /* Search & Filters */
+    /* Controls */
     .search-box {
       width: 100%;
       padding: 12px 15px;
@@ -163,7 +155,6 @@
     .filters {
       display: flex;
       gap: 8px;
-      justify-content: flex-start;
       margin-bottom: 1.5rem;
     }
 
@@ -184,39 +175,43 @@
       border-color: var(--primary);
     }
 
-    /* Products Grid / Empty State */
     .products-grid {
       display: grid;
       gap: 12px;
     }
 
-    .empty-state {
-      text-align: center;
-      padding: 3rem 1rem;
-      color: var(--text-muted);
+    .product-card {
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 12px;
+      display: flex;
+      gap: 12px;
+      align-items: center;
     }
 
-    .empty-icon {
-      font-size: 3rem;
-      color: #cbd5e1;
-      margin-bottom: 1rem;
+    .product-img {
+      width: 60px;
+      height: 60px;
+      border-radius: 8px;
+      object-fit: cover;
+      background: #f1f5f9;
     }
 
-    .empty-text {
-      font-size: 0.9rem;
-      line-height: 1.5;
-    }
+    .product-details { flex: 1; text-align: right; }
+    .product-title { font-weight: bold; font-size: 0.95rem; }
+    .product-sub { font-size: 0.8rem; color: var(--text-muted); }
+    .product-price { font-weight: bold; color: var(--success); margin-top: 4px; }
 
-    /* Modal Styling */
+    /* Modals */
     .modal {
       display: none;
       position: fixed;
       top: 0; left: 0; width: 100%; height: 100%;
       background: rgba(0,0,0,0.5);
       z-index: 1000;
-      align-items: flex-start;
+      align-items: center;
       justify-content: center;
-      overflow-y: auto;
       padding: 20px 10px;
     }
 
@@ -226,7 +221,6 @@
       border-radius: 16px;
       width: 100%;
       max-width: 420px;
-      margin: auto;
       box-shadow: 0 10px 25px rgba(0,0,0,0.15);
     }
 
@@ -248,7 +242,6 @@
       margin-bottom: 6px;
       font-weight: 600;
       font-size: 0.85rem;
-      color: var(--text-dark);
     }
 
     .form-control {
@@ -261,12 +254,6 @@
       outline: none;
     }
 
-    .form-control:focus {
-      border-color: var(--primary);
-      background-color: #fff;
-    }
-
-    /* File Input Styling */
     .file-input-wrapper {
       position: relative;
       width: 100%;
@@ -285,18 +272,9 @@
       color: var(--text-muted);
       font-size: 0.85rem;
       font-weight: 600;
-      transition: all 0.2s ease;
     }
 
-    .file-input-label:hover {
-      border-color: var(--primary);
-      color: var(--primary);
-      background-color: #f1f5f9;
-    }
-
-    .file-input {
-      display: none;
-    }
+    .file-input { display: none; }
 
     .image-preview {
       margin-top: 8px;
@@ -308,7 +286,6 @@
 
     .modal-actions {
       display: flex;
-      flex-direction: row-reverse;
       gap: 10px;
       margin-top: 1.5rem;
     }
@@ -321,7 +298,17 @@
       padding: 12px;
       border-radius: 8px;
       font-weight: bold;
-      font-size: 0.95rem;
+      cursor: pointer;
+    }
+
+    .btn-danger {
+      flex: 1;
+      background: var(--danger);
+      color: white;
+      border: none;
+      padding: 12px;
+      border-radius: 8px;
+      font-weight: bold;
       cursor: pointer;
     }
 
@@ -333,31 +320,12 @@
       padding: 12px;
       border-radius: 8px;
       font-weight: bold;
-      font-size: 0.95rem;
       cursor: pointer;
     }
-
-    .product-card {
-      background: white;
-      border: 1px solid #e2e8f0;
-      border-radius: 10px;
-      padding: 12px;
-      display: flex;
-      gap: 12px;
-      align-items: center;
-    }
-    .product-img {
-      width: 60px; height: 60px; border-radius: 8px; object-fit: cover; background: #f1f5f9;
-    }
-    .product-details { flex: 1; text-align: right; }
-    .product-title { font-weight: bold; font-size: 0.95rem; }
-    .product-sub { font-size: 0.8rem; color: var(--text-muted); }
-    .product-price { font-weight: bold; color: var(--success); margin-top: 4px; }
   </style>
 </head>
 <body>
 
-  <!-- Header -->
   <header>
     <div class="brand-info">
       <div class="logo-circle">
@@ -375,7 +343,6 @@
   </header>
 
   <div class="container">
-    <!-- Stats Cards -->
     <div class="stats-grid">
       <div class="stat-card">
         <div class="stat-icon icon-box"><i class="fas fa-box"></i></div>
@@ -394,17 +361,14 @@
       </div>
     </div>
 
-    <!-- Search input -->
     <input type="text" class="search-box" id="searchInput" placeholder="ابحث عن نوع أو وصف..." oninput="renderData()">
 
-    <!-- Filter Buttons -->
     <div class="filters">
       <button class="filter-btn active" onclick="setFilter('الكل', this)">الكل</button>
       <button class="filter-btn" onclick="setFilter('متوفر', this)">متوفر</button>
       <button class="filter-btn" onclick="setFilter('مباع', this)">مباع</button>
     </div>
 
-    <!-- Products List / Empty Area -->
     <div id="productsGrid" class="products-grid"></div>
   </div>
 
@@ -450,11 +414,25 @@
     </div>
   </div>
 
+  <!-- Custom Delete Confirmation Modal -->
+  <div class="modal" id="deleteModal">
+    <div class="modal-content" style="text-align: center;">
+      <i class="fas fa-exclamation-triangle" style="font-size: 2.5rem; color: var(--danger); margin-bottom: 1rem;"></i>
+      <div class="modal-header" style="text-align: center; margin-bottom: 0.5rem;">تأكيد الحذف</div>
+      <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.5rem;">هل أنت تأكد من رغبتك في حذف هذه القطعة؟</p>
+      <div class="modal-actions">
+        <button type="button" class="btn-danger" id="confirmDeleteBtn">حذف</button>
+        <button type="button" class="btn-cancel" onclick="closeDeleteModal()">إلغاء</button>
+      </div>
+    </div>
+  </div>
+
   <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbzyzl-JUXOmxMeDZxzn00ygPV3pyYAL6qcNGNRBbpetwuqU8Gew2wGnxU-zXCV_xkNMoQ/exec";
+    const API_URL = "https://script.google.com/macros/s/AKfycbzUYILgqSOYKBgFXmwIGlXQylmAfFkIp09oJknX1yRJivGM1fUtwa4e4FHy_DBic48ffA/exec";
     let allItems = [];
     let currentFilter = 'الكل';
     let base64Image = "";
+    let itemToDeleteId = null;
 
     async function fetchData() {
       try {
@@ -487,9 +465,9 @@
 
       if (filtered.length === 0) {
         container.innerHTML = `
-          <div class="empty-state">
-            <div class="empty-icon"><i class="fas fa-tag"></i></div>
-            <div class="empty-text">لا توجد قطع بعد. أضف أول قطعة لمخزون Youth Style.</div>
+          <div style="text-align: center; padding: 3rem 1rem; color: var(--text-muted);">
+            <i class="fas fa-tag" style="font-size: 3rem; color: #cbd5e1; margin-bottom: 1rem;"></i>
+            <div>لا توجد قطع حالياً.</div>
           </div>
         `;
         return;
@@ -505,7 +483,7 @@
             <div class="product-sub">${item.type || ''} - ${item.status || ''}</div>
             <div class="product-price">${item.price || 0} د.ج</div>
           </div>
-          <button onclick="deleteItem('${item.id}')" style="background:none; border:none; color:var(--danger); cursor:pointer;">
+          <button onclick="promptDelete('${item.id}')" style="background:none; border:none; color:var(--danger); cursor:pointer; padding: 8px;">
             <i class="fas fa-trash"></i>
           </button>
         `;
@@ -520,10 +498,7 @@
       renderData();
     }
 
-    function openModal() { 
-      document.getElementById("itemModal").style.display = "flex"; 
-    }
-
+    function openModal() { document.getElementById("itemModal").style.display = "flex"; }
     function closeModal() { 
       document.getElementById("itemModal").style.display = "none";
       base64Image = "";
@@ -534,7 +509,6 @@
       document.getElementById("btnSave").innerText = "حفظ";
     }
 
-    // ضغط الصورة تلقائياً لتقليل الحجم
     function previewAndCompressImage(event) {
       const file = event.target.files[0];
       if (file) {
@@ -544,14 +518,14 @@
           img.onload = function() {
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
-            const maxWidth = 300;
+            const maxWidth = 250;
             const scaleSize = maxWidth / img.width;
             
             canvas.width = maxWidth;
             canvas.height = img.height * scaleSize;
 
             ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-            base64Image = canvas.toDataURL('image/jpeg', 0.7);
+            base64Image = canvas.toDataURL('image/jpeg', 0.6);
 
             const preview = document.getElementById("imgPreview");
             preview.src = base64Image;
@@ -570,44 +544,58 @@
       saveBtn.disabled = true;
       saveBtn.innerText = "جاري الحفظ...";
 
-      const payload = {
-        action: "save",
-        item: {
-          id: Date.now().toString(),
-          desc: document.getElementById("pDesc").value,
-          type: document.getElementById("pType").value,
-          price: document.getElementById("pPrice").value,
-          status: document.getElementById("pStatus").value,
-          image: base64Image
-        }
+      const newItem = {
+        id: Date.now().toString(),
+        desc: document.getElementById("pDesc").value,
+        type: document.getElementById("pType").value,
+        price: document.getElementById("pPrice").value,
+        status: document.getElementById("pStatus").value,
+        image: base64Image
       };
+
+      allItems.unshift(newItem);
+      renderData();
+      closeModal();
 
       try {
         await fetch(API_URL, {
           method: "POST",
           headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: JSON.stringify(payload)
+          body: JSON.stringify({ action: "save", item: newItem })
         });
-        closeModal();
-        fetchData();
       } catch (err) {
         console.error("Save error:", err);
-        alert("حدث خطأ أثناء الحفظ!");
-        saveBtn.disabled = false;
-        saveBtn.innerText = "حفظ";
       }
     }
 
-    async function deleteItem(id) {
-      if (confirm("هل تريد الحذف؟")) {
+    function promptDelete(id) {
+      itemToDeleteId = id;
+      document.getElementById("deleteModal").style.display = "flex";
+    }
+
+    function closeDeleteModal() {
+      itemToDeleteId = null;
+      document.getElementById("deleteModal").style.display = "none";
+    }
+
+    document.getElementById("confirmDeleteBtn").onclick = async function() {
+      if (!itemToDeleteId) return;
+      const id = itemToDeleteId;
+      closeDeleteModal();
+
+      allItems = allItems.filter(i => i.id.toString() !== id.toString());
+      renderData();
+
+      try {
         await fetch(API_URL, {
           method: "POST",
           headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: JSON.stringify({ action: "delete", id })
+          body: JSON.stringify({ action: "delete", id: id })
         });
-        fetchData();
+      } catch (err) {
+        console.error("Delete error:", err);
       }
-    }
+    };
 
     fetchData();
   </script>
