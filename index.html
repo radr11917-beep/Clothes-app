@@ -626,8 +626,8 @@
   </div>
 
   <script>
-    const ADMIN_PIN = "2007";  // الرمز الكامل للمدير (إدارة، كميات، إضافة وتعديل)
-    const VIEWER_PIN = "2006"; // الرمز الثاني (عرض الأسعار والقطع فقط بدون كميات أو تحكم)
+    const ADMIN_PIN = "2007";
+    const VIEWER_PIN = "2006";
     const API_URL = "https://script.google.com/macros/s/AKfycbxzjbhUX1FJ-1m4k2zIEaKJdi0IXlJKiMaRdffQpdfSZqRoCf5cvt4-Ei344z4EXXMqjA/exec";
     
     let userRole = "none";
@@ -637,8 +637,9 @@
     let itemToDeleteId = null;
 
     function handleUnlock(e) {
-      e.preventDefault();
-      const enteredPin = document.getElementById("pinInput").value.trim();
+      if (e) e.preventDefault();
+      const inputEl = document.getElementById("pinInput");
+      const enteredPin = inputEl.value.toString().trim();
       
       if (enteredPin === ADMIN_PIN) {
         userRole = "admin";
@@ -650,8 +651,8 @@
         unlockView();
       } else {
         document.getElementById("lockError").innerText = "الرمز السري غير صحيح!";
-        document.getElementById("pinInput").value = "";
-        document.getElementById("pinInput").focus();
+        inputEl.value = "";
+        inputEl.focus();
       }
     }
 
@@ -667,7 +668,6 @@
         filtersBar.style.display = "flex";
         roleText.innerText = "لوحة التحكم (المدير)";
       } else {
-        // في وضع العرض فقط: إخفاء الإحصائيات وزر الإضافة وأزرار الفلترة
         btnAdd.style.display = "none";
         statsGrid.style.display = "none";
         filtersBar.style.display = "none";
@@ -729,4 +729,9 @@
         document.getElementById("totalValue").innerText = totalVal;
       }
 
-      const container = document.getEl
+      const container = document.getElementById("productsGrid");
+      container.innerHTML = "";
+
+      if (filtered.length === 0) {
+        container.innerHTML = `
+          <div style="text-align: center; padding: 3rem 1rem; colo
