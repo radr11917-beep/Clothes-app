@@ -438,12 +438,12 @@
             <label for="pImgFile" class="file-input-label" id="fileLabel">
               <i class="fas fa-camera"></i> اختار صورة من الجهاز
             </label>
-            <input type="file" id="pImgFile" class="file-input" accept="image/*" onchange="previewImage(event)">
+            <input type="file" id="pImgFile" class="file-input" accept="image/*" onchange="previewAndCompressImage(event)">
           </div>
           <img id="imgPreview" class="image-preview" alt="معاينة الصورة">
         </div>
         <div class="modal-actions">
-          <button type="submit" class="btn-save">حفظ</button>
+          <button type="submit" class="btn-save" id="btnSave">حفظ</button>
           <button type="button" onclick="closeModal()" class="btn-cancel">إلغاء</button>
         </div>
       </form>
@@ -459,10 +459,11 @@
     async function fetchData() {
       try {
         const res = await fetch(API_URL);
-        allItems = await res.json();
+        const data = await res.json();
+        allItems = Array.isArray(data) ? data : [];
         renderData();
       } catch (e) {
-        console.error(e);
+        console.error("Error fetching data:", e);
       }
     }
 
@@ -500,9 +501,9 @@
         div.innerHTML = `
           <img src="${item.image || 'https://via.placeholder.com/60'}" class="product-img">
           <div class="product-details">
-            <div class="product-title">${item.desc}</div>
-            <div class="product-sub">${item.type} - ${item.status}</div>
-            <div class="product-price">${item.price} د.ج</div>
+            <div class="product-title">${item.desc || ''}</div>
+            <div class="product-sub">${item.type || ''} - ${item.status || ''}</div>
+            <div class="product-price">${item.price || 0} د.ج</div>
           </div>
           <button onclick="deleteItem('${item.id}')" style="background:none; border:none; color:var(--danger); cursor:pointer;">
             <i class="fas fa-trash"></i>
@@ -525,23 +526,39 @@
 
     function closeModal() { 
       document.getElementById("itemModal").style.display = "none";
-      // Reset Image Form
       base64Image = "";
       document.getElementById("pImgFile").value = "";
       document.getElementById("imgPreview").style.display = "none";
       document.getElementById("fileLabel").innerHTML = `<i class="fas fa-camera"></i> اختار صورة من الجهاز`;
+      document.getElementById("btnSave").disabled = false;
+      document.getElementById("btnSave").innerText = "حفظ";
     }
 
-    function previewImage(event) {
+    // ضغط الصورة تلقائياً لتقليل الحجم
+    function previewAndCompressImage(event) {
       const file = event.target.files[0];
       if (file) {
         const reader = new FileReader();
         reader.onload = function(e) {
-          base64Image = e.target.result;
-          const preview = document.getElementById("imgPreview");
-          preview.src = base64Image;
-          preview.style.display = "block";
-          document.getElementById("fileLabel").innerHTML = `<i class="fas fa-check"></i> تم اختيار الصورة`;
+          const img = new Image();
+          img.onload = function() {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            const maxWidth = 300;
+            const scaleSize = maxWidth / img.width;
+            
+            canvas.width = maxWidth;
+            canvas.height = img.height * scaleSize;
+
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            base64Image = canvas.toDataURL('image/jpeg', 0.7);
+
+            const preview = document.getElementById("imgPreview");
+            preview.src = base64Image;
+            preview.style.display = "block";
+            document.getElementById("fileLabel").innerHTML = `<i class="fas fa-check"></i> تم اختيار الصورة`;
+          };
+          img.src = e.target.result;
         };
         reader.readAsDataURL(file);
       }
@@ -549,6 +566,10 @@
 
     async function handleSave(e) {
       e.preventDefault();
+      const saveBtn = document.getElementById("btnSave");
+      saveBtn.disabled = true;
+      saveBtn.innerText = "جاري الحفظ...";
+
       const payload = {
         action: "save",
         item: {
@@ -561,14 +582,29 @@
         }
       };
 
-      closeModal();
-      await fetch(API_URL, { method: "POST", body: JSON.stringify(payload) });
-      fetchData();
+      try {
+        await fetch(API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify(payload)
+        });
+        closeModal();
+        fetchData();
+      } catch (err) {
+        console.error("Save error:", err);
+        alert("حدث خطأ أثناء الحفظ!");
+        saveBtn.disabled = false;
+        saveBtn.innerText = "حفظ";
+      }
     }
 
     async function deleteItem(id) {
       if (confirm("هل تريد الحذف؟")) {
-        await fetch(API_URL, { method: "POST", body: JSON.stringify({ action: "delete", id }) });
+        await fetch(API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({ action: "delete", id })
+        });
         fetchData();
       }
     }
