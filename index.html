@@ -3,233 +3,484 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>متجري للملابس</title>
+  <title>سجل الملابس</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
 </head>
-<body class="bg-slate-100 min-h-screen font-sans pb-10">
+<body>
   <div id="root"></div>
 
   <script type="text/babel">
-    const { useState, useEffect } = React;
+    const { useState, useEffect, useMemo, useRef } = React;
 
-    function App() {
-      const [items, setItems] = useState(() => {
-        try {
-          const saved = localStorage.getItem('clothes_v5');
-          return saved ? JSON.parse(saved) : [];
-        } catch (e) {
-          return [];
+    // محاكاة Lucide Icons
+    const Plus = () => <span>➕</span>;
+    const Trash2 = () => <span>🗑️</span>;
+    const Pencil = () => <span>✏️</span>;
+    const Search = () => <span>🔍</span>;
+    const Package = () => <span>📦</span>;
+    const Wallet = () => <span>💰</span>;
+    const CheckCircle2 = () => <span>✅</span>;
+    const XCircle = () => <span>❌</span>;
+    const Tag = () => <span>🏷️</span>;
+    const X = () => <span>✖</span>;
+    const ImagePlus = () => <span>🖼️</span>;
+    const ImageOff = () => <span>🚫</span>;
+
+    // إعداد التخزين المحلي LocalStorage
+    if (!window.storage) {
+      window.storage = {
+        async list(prefix) {
+          const keys = Object.keys(localStorage).filter(k => k.startsWith(prefix));
+          return { keys };
+        },
+        async get(key) {
+          return { value: localStorage.getItem(key) };
+        },
+        async set(key, value) {
+          localStorage.setItem(key, value);
+          return true;
+        },
+        async delete(key) {
+          localStorage.removeItem(key);
+          return true;
         }
-      });
-      const [type, setType] = useState('');
-      const [price, setPrice] = useState('');
-      const [size, setSize] = useState('M');
-      const [image, setImage] = useState(null);
-      const [filter, setFilter] = useState('الكل');
+      };
+    }
+
+    const emptySizeRow = () => ({ size: "", qty: 1 });
+    const EMPTY_FORM = { type: "", desc: "", price: "", status: "available", image: null, sizes: [emptySizeRow()] };
+
+    function ClothesInventory() {
+      const [items, setItems] = useState([]);
+      const [loading, setLoading] = useState(true);
+      const [form, setForm] = useState(EMPTY_FORM);
+      const [editingId, setEditingId] = useState(null);
+      const [query, setQuery] = useState("");
+      const [filter, setFilter] = useState("all");
+      const [showForm, setShowForm] = useState(false);
+      const [err, setErr] = useState("");
+      const [saving, setSaving] = useState(false);
+      const fileRef = useRef(null);
 
       useEffect(() => {
+        loadAll();
+      }, []);
+
+      const loadAll = async () => {
+        setLoading(true);
         try {
-          localStorage.setItem('clothes_v5', JSON.stringify(items));
+          const listRes = await window.storage.list("item:", true);
+          const keys = (listRes && listRes.keys) || [];
+          const loaded = [];
+          for (const k of keys) {
+            try {
+              const res = await window.storage.get(k, true);
+              if (res && res.value) loaded.push(JSON.parse(res.value));
+            } catch (e) {}
+          }
+          loaded.sort((a, b) => Number(b.id) - Number(a.id));
+          setItems(loaded);
         } catch (e) {
-          console.error("المساحة ممتلئة");
+          setItems([]);
+        } finally {
+          setLoading(false);
         }
+      };
+
+      const totalQty = (it) => (it.sizes || []).reduce((s, r) => s + (Number(r.qty) || 0), 0);
+
+      const saveItem = async (item) => {
+        setSaving(true);
+        try {
+          const res = await window.storage.set("item:" + item.id, JSON.stringify(item), true);
+          if (!res) throw new Error("save failed");
+          setErr("");
+          return true;
+        } catch (e) {
+          setErr("تعذر حفظ القطعة، تحقق من الاتصال وحاول مجددًا.");
+          return false;
+        } finally {
+          setSaving(false);
+        }
+      };
+
+      const resetForm = () => {
+        setForm(EMPTY_FORM);
+        setEditingId(null);
+        setShowForm(false);
+      };
+
+      const handleImageFile = (file) => {
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = () => {
+          const img = new Image();
+          img.onload = () => {
+            const maxW = 500;
+            const scale = Math.min(1, maxW / img.width);
+            const canvas = document.createElement("canvas");
+            canvas.width = img.width * scale;
+            canvas.height = img.height * scale;
+            const ctx = canvas.getContext("2d");
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            const dataUrl = canvas.toDataURL("image/jpeg", 0.72);
+            setForm((f) => ({ ...f, image: dataUrl }));
+          };
+          img.src = reader.result;
+        };
+        reader.readAsDataURL(file);
+      };
+
+      const updateSizeRow = (idx, field, value) => {
+        setForm((f) => {
+          const sizes = [...f.sizes];
+          sizes[idx] = { ...sizes[idx], [field]: value };
+          return { ...f, sizes };
+        });
+      };
+      const addSizeRow = () => setForm((f) => ({ ...f, sizes: [...f.sizes, emptySizeRow()] }));
+      const removeSizeRow = (idx) => setForm((f) => ({ ...f, sizes: f.sizes.filter((_, i) => i !== idx) }));
+
+      const submit = async (e) => {
+        e.preventDefault();
+        if (!form.type.trim()) return;
+        const cleanSizes = form.sizes.filter((r) => Number(r.qty) > 0).map((r) => ({ size: r.size.trim(), qty: Number(r.qty) }));
+        const finalSizes = cleanSizes.length ? cleanSizes : [{ size: "", qty: 1 }];
+        const id = editingId || Date.now().toString();
+        const item = {
+          id,
+          type: form.type.trim(),
+          desc: form.desc.trim(),
+          price: Number(form.price) || 0,
+          status: form.status,
+          image: form.image,
+          sizes: finalSizes,
+        };
+        const ok = await saveItem(item);
+        if (ok) {
+          setItems((prev) => {
+            const exists = prev.some((p) => p.id === id);
+            return exists ? prev.map((p) => (p.id === id ? item : p)) : [item, ...prev];
+          });
+          resetForm();
+        }
+      };
+
+      const startEdit = (it) => {
+        setForm({
+          type: it.type,
+          desc: it.desc,
+          price: it.price,
+          status: it.status,
+          image: it.image || null,
+          sizes: it.sizes && it.sizes.length ? it.sizes : [emptySizeRow()],
+        });
+        setEditingId(it.id);
+        setShowForm(true);
+      };
+
+      const remove = async (id) => {
+        try {
+          await window.storage.delete("item:" + id, true);
+          setItems((prev) => prev.filter((it) => it.id !== id));
+        } catch (e) {
+          setErr("تعذر حذف القطعة.");
+        }
+      };
+
+      const toggleStatus = async (it) => {
+        const updated = { ...it, status: it.status === "available" ? "sold" : "available" };
+        const ok = await saveItem(updated);
+        if (ok) setItems((prev) => prev.map((x) => (x.id === it.id ? updated : x)));
+      };
+
+      const filtered = useMemo(() => {
+        return items.filter((it) => {
+          const matchesQuery = (it.type + " " + it.desc).toLowerCase().includes(query.toLowerCase());
+          const matchesFilter = filter === "all" || it.status === filter;
+          return matchesQuery && matchesFilter;
+        });
+      }, [items, query, filter]);
+
+      const stats = useMemo(() => {
+        const totalPieces = items.reduce((s, it) => s + totalQty(it), 0);
+        const availablePieces = items.filter((i) => i.status === "available").reduce((s, it) => s + totalQty(it), 0);
+        const totalValue = items.filter((i) => i.status === "available").reduce((s, it) => s + totalQty(it) * Number(it.price || 0), 0);
+        return { totalPieces, availablePieces, totalValue };
       }, [items]);
 
-      // دالة لضغط الصورة لتفادي توقف التطبيق
-      const handleImageUpload = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-          const img = document.createElement('img');
-          const reader = new FileReader();
-          reader.onload = (event) => {
-            img.src = event.target.result;
-            img.onload = () => {
-              const canvas = document.createElement('canvas');
-              const MAX_WIDTH = 200;
-              const MAX_HEIGHT = 200;
-              let width = img.width;
-              let height = img.height;
-
-              if (width > height) {
-                if (width > MAX_WIDTH) {
-                  height *= MAX_WIDTH / width;
-                  width = MAX_WIDTH;
-                }
-              } else {
-                if (height > MAX_HEIGHT) {
-                  width *= MAX_HEIGHT / height;
-                  height = MAX_HEIGHT;
-                }
-              }
-
-              canvas.width = width;
-              canvas.height = height;
-              const ctx = canvas.getContext('2d');
-              ctx.drawImage(img, 0, 0, width, height);
-              setImage(canvas.toDataURL('image/jpeg', 0.6));
-            };
-          };
-          reader.readAsDataURL(file);
-        }
-      };
-
-      const addItem = (e) => {
-        e.preventDefault();
-        if (!type || !price) return;
-        setItems([{ id: Date.now(), type, price: Number(price), size, image, status: 'متوفر' }, ...items]);
-        setType('');
-        setPrice('');
-        setSize('M');
-        setImage(null);
-      };
-
-      const toggleStatus = (id) => {
-        setItems(items.map(item => item.id === id ? { ...item, status: item.status === 'متوفر' ? 'تم البيع' : 'متوفر' } : item));
-      };
-
-      const deleteItem = (id) => {
-        setItems(items.filter(item => item.id !== id));
-      };
-
-      const filtered = items.filter(item => filter === 'الكل' ? true : item.status === filter);
-      const totalSales = items.filter(i => i.status === 'تم البيع').reduce((acc, curr) => acc + curr.price, 0);
-      const availableCount = items.filter(i => i.status === 'متوفر').length;
-
       return (
-        <div class="max-w-md mx-auto p-4 space-y-4">
-          <div class="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-3xl p-5 text-white shadow-lg shadow-blue-500/20">
-            <div class="flex justify-between items-center mb-4">
-              <div>
-                <h1 class="text-xl font-black">مخزون الملابس 🛍️</h1>
-                <p class="text-xs text-blue-100 opacity-80">إدارة الصور والمقاسات</p>
+        <div dir="rtl" className="min-h-screen" style={{ background: "#EDE7D8", fontFamily: "'IBM Plex Sans Arabic', sans-serif" }}>
+          <style>{`
+            @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@600;800&family=IBM+Plex+Sans+Arabic:wght@400;500;600&display=swap');
+            .brand-font { font-family: 'Cairo', sans-serif; }
+            .tag-card { position: relative; }
+            .tag-card::before {
+              content: "";
+              position: absolute;
+              top: 14px;
+              left: 22px;
+              width: 10px;
+              height: 10px;
+              border-radius: 50%;
+              background: #EDE7D8;
+              border: 2px solid #2C4A6E;
+              z-index: 2;
+            }
+            .input { width: 100%; padding: 9px 12px; border-radius: 6px; border: 1px solid #D9D0BA; font-size: 14px; outline: none; background: #FBFAF6; }
+            .input:focus { border-color: #2C4A6E; }
+          `}</style>
+
+          <header className="px-5 pt-8 pb-6" style={{ background: "#232323" }}>
+            <div className="max-w-5xl mx-auto flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-11 h-11 rounded-md flex items-center justify-center rotate-[-8deg]" style={{ background: "#C89B3C" }}>
+                  <Tag />
+                </div>
+                <div>
+                  <h1 className="brand-font text-2xl font-extrabold" style={{ color: "#EDE7D8" }}>سجل الملابس</h1>
+                  <p className="text-sm" style={{ color: "#B5AD98" }}>مخزون مشترك — جاهز للبيع</p>
+                </div>
               </div>
-              <span class="bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-xs font-bold">
-                {items.length} قطعة
-              </span>
-            </div>
-
-            <div class="grid grid-cols-2 gap-2 text-center pt-2 border-t border-white/10">
-              <div class="bg-white/10 backdrop-blur-sm p-2.5 rounded-2xl">
-                <span class="text-[10px] text-blue-100 block">إجمالي المبيعات</span>
-                <span class="text-lg font-black text-emerald-300">{totalSales.toLocaleString()} <span class="text-[10px]">د.ج</span></span>
-              </div>
-              <div class="bg-white/10 backdrop-blur-sm p-2.5 rounded-2xl">
-                <span class="text-[10px] text-blue-100 block">قطع متوفرة</span>
-                <span class="text-lg font-black text-white">{availableCount} <span class="text-[10px]">قطعة</span></span>
-              </div>
-            </div>
-          </div>
-
-          <form onSubmit={addItem} class="bg-white rounded-3xl p-4 shadow-sm border border-slate-200/80 space-y-3">
-            <h2 class="text-xs font-bold text-slate-400 uppercase tracking-wider">إضافة قطعة جديدة</h2>
-            
-            <div class="grid grid-cols-2 gap-2">
-              <input 
-                type="text" 
-                value={type} 
-                onChange={(e) => setType(e.target.value)} 
-                placeholder="نوع القطعة (قميص، سروال...)" 
-                class="bg-slate-50 border border-slate-200 rounded-2xl px-3 py-2.5 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500" 
-                required 
-              />
-              <input 
-                type="number" 
-                value={price} 
-                onChange={(e) => setPrice(e.target.value)} 
-                placeholder="السعر (د.ج)" 
-                class="bg-slate-50 border border-slate-200 rounded-2xl px-3 py-2.5 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500" 
-                required 
-              />
-            </div>
-
-            <div class="grid grid-cols-2 gap-2 items-center">
-              <div>
-                <label class="text-[10px] text-slate-400 font-bold mb-1 block">المقاس:</label>
-                <select 
-                  value={size} 
-                  onChange={(e) => setSize(e.target.value)} 
-                  class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3 py-2 text-xs font-bold text-slate-700 focus:outline-none"
-                >
-                  {['S', 'M', 'L', 'XL', 'XXL', '38', '40', '42', '44'].map(sz => (
-                    <option key={sz} value={sz}>{sz}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label class="text-[10px] text-slate-400 font-bold mb-1 block">صورة القطعة:</label>
-                <label class="flex items-center justify-center bg-slate-50 border border-dashed border-slate-300 rounded-2xl p-2 text-xs text-slate-500 cursor-pointer hover:bg-slate-100">
-                  <span>{image ? '✓ تم اختيار صورة' : '📷 رفع صورة'}</span>
-                  <input type="file" accept="image/*" onChange={handleImageUpload} class="hidden" />
-                </label>
-              </div>
-            </div>
-
-            <button type="submit" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 rounded-2xl text-xs transition shadow-md active:scale-95">
-              + إضافة للمخزن
-            </button>
-          </form>
-
-          <div class="flex bg-slate-200/60 p-1 rounded-2xl text-xs font-bold text-slate-600">
-            {['الكل', 'متوفر', 'تم البيع'].map(st => (
-              <button 
-                key={st} 
-                onClick={() => setFilter(st)} 
-                class={`flex-1 py-2 rounded-xl transition ${filter === st ? 'bg-white text-slate-900 shadow-sm' : 'hover:text-slate-900'}`}
+              <button
+                onClick={() => { setShowForm(true); setForm(EMPTY_FORM); setEditingId(null); }}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-md font-semibold text-sm transition active:scale-95"
+                style={{ background: "#C89B3C", color: "#232323" }}
               >
-                {st}
+                <Plus /> إضافة قطعة
               </button>
-            ))}
-          </div>
+            </div>
+          </header>
 
-          <div class="space-y-2.5">
-            {filtered.map(item => (
-              <div key={item.id} class="bg-white p-3 rounded-2xl border border-slate-200/60 shadow-sm flex justify-between items-center gap-3">
-                <div class="flex items-center gap-3">
-                  {item.image ? (
-                    <img src={item.image} alt={item.type} class="w-12 h-12 rounded-xl object-cover border border-slate-100" />
-                  ) : (
-                    <div class="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 font-bold text-[10px]">
-                      بلا صورة
+          <main className="max-w-5xl mx-auto px-5 py-6">
+            <div className="grid grid-cols-3 gap-3 mb-6">
+              <StatCard icon={<Package />} label="إجمالي القطع" value={stats.totalPieces} color="#2C4A6E" />
+              <StatCard icon={<CheckCircle2 />} label="متوفرة" value={stats.availablePieces} color="#4B7A55" />
+              <StatCard icon={<Wallet />} label="قيمة المتوفر (د.ج)" value={stats.totalValue.toLocaleString("ar-DZ")} color="#C89B3C" />
+            </div>
+
+            {err && (
+              <div className="mb-4 px-4 py-2 rounded-md text-sm" style={{ background: "#F3D9CE", color: "#A64B2A" }}>{err}</div>
+            )}
+
+            <div className="flex flex-col sm:flex-row gap-3 mb-6">
+              <div className="flex items-center gap-2 flex-1 px-3 py-2.5 rounded-md bg-white border" style={{ borderColor: "#D9D0BA" }}>
+                <Search />
+                <input
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="ابحث عن نوع أو وصف..."
+                  className="flex-1 outline-none text-sm bg-transparent"
+                  style={{ color: "#232323" }}
+                />
+              </div>
+              <div className="flex gap-2">
+                {[
+                  { key: "all", label: "الكل" },
+                  { key: "available", label: "متوفر" },
+                  { key: "sold", label: "مباع" },
+                ].map((f) => (
+                  <button
+                    key={f.key}
+                    onClick={() => setFilter(f.key)}
+                    className="px-4 py-2 rounded-md text-sm font-medium transition"
+                    style={filter === f.key ? { background: "#2C4A6E", color: "#EDE7D8" } : { background: "#F7F3E9", color: "#5A5648", border: "1px solid #D9D0BA" }}
+                  >
+                    {f.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {showForm && (
+              <form onSubmit={submit} className="mb-6 p-5 rounded-lg bg-white border" style={{ borderColor: "#D9D0BA" }}>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="brand-font font-bold text-lg" style={{ color: "#232323" }}>{editingId ? "تعديل القطعة" : "قطعة جديدة"}</h2>
+                  <button type="button" onClick={resetForm}><X /></button>
+                </div>
+
+                <div className="mb-4">
+                  <span className="block text-xs font-medium mb-1" style={{ color: "#5A5648" }}>صورة القطعة</span>
+                  <div className="flex items-center gap-3">
+                    <div
+                      onClick={() => fileRef.current && fileRef.current.click()}
+                      className="w-24 h-24 rounded-md flex items-center justify-center cursor-pointer overflow-hidden shrink-0"
+                      style={{ background: "#F7F3E9", border: "1px dashed #D9D0BA" }}
+                    >
+                      {form.image ? (
+                        <img src={form.image} alt="معاينة" className="w-full h-full object-cover" />
+                      ) : (
+                        <ImagePlus />
+                      )}
                     </div>
-                  )}
-                  <div class="space-y-0.5">
-                    <div class="flex items-center gap-1.5">
-                      <h3 class="font-bold text-slate-800 text-sm">{item.type}</h3>
-                      <span class="bg-slate-100 text-slate-600 text-[10px] font-black px-2 py-0.5 rounded-md border border-slate-200">
-                        {item.size}
-                      </span>
+                    <input
+                      ref={fileRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => handleImageFile(e.target.files[0])}
+                    />
+                    <div className="flex flex-col gap-1">
+                      <button type="button" onClick={() => fileRef.current && fileRef.current.click()} className="text-xs font-medium px-3 py-1.5 rounded-md" style={{ background: "#F7F3E9", color: "#2C4A6E", border: "1px solid #D9D0BA" }}>
+                        {form.image ? "تغيير الصورة" : "اختيار صورة"}
+                      </button>
+                      {form.image && (
+                        <button type="button" onClick={() => setForm((f) => ({ ...f, image: null }))} className="flex items-center gap-1 text-xs font-medium" style={{ color: "#A64B2A" }}>
+                          <ImageOff /> إزالة الصورة
+                        </button>
+                      )}
                     </div>
-                    <p class="text-xs font-black text-blue-600">{item.price.toLocaleString()} د.ج</p>
                   </div>
                 </div>
 
-                <div class="flex items-center gap-2">
-                  <button 
-                    onClick={() => toggleStatus(item.id)} 
-                    class={`px-3 py-1.5 rounded-xl text-xs font-bold border transition ${
-                      item.status === 'متوفر' 
-                        ? 'bg-emerald-50 text-emerald-600 border-emerald-200' 
-                        : 'bg-slate-100 text-slate-400 border-slate-200 line-through'
-                    }`}
-                  >
-                    {item.status}
-                  </button>
-                  <button onClick={() => deleteItem(item.id)} class="text-slate-300 hover:text-red-500 text-sm font-bold px-1">
-                    ✕
+                <div className="grid sm:grid-cols-2 gap-3 mb-4">
+                  <Field label="نوع الملابس *">
+                    <input required value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })} placeholder="مثال: قميص، بنطال، جاكيت" className="input" />
+                  </Field>
+                  <Field label="الوصف">
+                    <input value={form.desc} onChange={(e) => setForm({ ...form, desc: e.target.value })} placeholder="مثال: أزرق قطن رجالي" className="input" />
+                  </Field>
+                  <Field label="السعر للقطعة (د.ج)">
+                    <input type="number" min="0" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} className="input" />
+                  </Field>
+                  <Field label="الحالة">
+                    <select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })} className="input">
+                      <option value="available">متوفر</option>
+                      <option value="sold">مباع</option>
+                    </select>
+                  </Field>
+                </div>
+
+                <div className="mb-4">
+                  <span className="block text-xs font-medium mb-2" style={{ color: "#5A5648" }}>المقاسات والكميات</span>
+                  <div className="flex flex-col gap-2">
+                    {form.sizes.map((row, idx) => (
+                      <div key={idx} className="flex items-center gap-2">
+                        <input
+                          value={row.size}
+                          onChange={(e) => updateSizeRow(idx, "size", e.target.value)}
+                          placeholder="المقاس (مثال: M، 42، مقاس واحد)"
+                          className="input flex-1"
+                        />
+                        <input
+                          type="number"
+                          min="1"
+                          value={row.qty}
+                          onChange={(e) => updateSizeRow(idx, "qty", e.target.value)}
+                          placeholder="الكمية"
+                          className="input"
+                          style={{ width: 90 }}
+                        />
+                        {form.sizes.length > 1 && (
+                          <button type="button" onClick={() => removeSizeRow(idx)}>
+                            <Trash2 />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  <button type="button" onClick={addSizeRow} className="mt-2 flex items-center gap-1 text-xs font-medium" style={{ color: "#2C4A6E" }}>
+                    <Plus /> إضافة مقاس آخر
                   </button>
                 </div>
+
+                <button type="submit" disabled={saving} className="px-5 py-2.5 rounded-md font-semibold text-sm disabled:opacity-60" style={{ background: "#2C4A6E", color: "#EDE7D8" }}>
+                  {saving ? "جارِ الحفظ..." : editingId ? "حفظ التعديلات" : "إضافة إلى المخزون"}
+                </button>
+              </form>
+            )}
+
+            {loading ? (
+              <p className="text-center py-10 text-sm" style={{ color: "#8A8272" }}>جارِ التحميل...</p>
+            ) : filtered.length === 0 ? (
+              <div className="text-center py-16">
+                <Tag />
+                <p style={{ color: "#8A8272" }}>{items.length === 0 ? "لا توجد قطع بعد. أضف أول قطعة لملابسك." : "لا توجد نتائج مطابقة."}</p>
               </div>
-            ))}
-          </div>
+            ) : (
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {filtered.map((it) => (
+                  <div key={it.id} className="tag-card rounded-lg overflow-hidden bg-white border shadow-sm" style={{ borderColor: "#D9D0BA" }}>
+                    {it.image && (
+                      <div className="w-full h-36 overflow-hidden" style={{ background: "#F7F3E9" }}>
+                        <img src={it.image} alt={it.type} className="w-full h-full object-cover" />
+                      </div>
+                    )}
+                    <div className="p-4 pt-5">
+                      <div className="flex items-start justify-between mb-2">
+                        <div>
+                          <h3 className="font-bold text-base" style={{ color: "#232323" }}>{it.type}</h3>
+                          {it.desc && <p className="text-xs mt-0.5" style={{ color: "#8A8272" }}>{it.desc}</p>}
+                        </div>
+                        <span
+                          className="text-xs px-2 py-1 rounded-full font-medium shrink-0"
+                          style={it.status === "available" ? { background: "#E3EEDF", color: "#4B7A55" } : { background: "#F3D9CE", color: "#A64B2A" }}
+                        >
+                          {it.status === "available" ? "متوفر" : "مباع"}
+                        </span>
+                      </div>
+
+                      <div className="flex flex-wrap gap-1.5 mb-3">
+                        {(it.sizes || []).map((r, i) => (
+                          <span key={i} className="text-xs px-2 py-1 rounded" style={{ background: "#F7F3E9", color: "#5A5648", border: "1px solid #EFEAD9" }}>
+                            {r.size ? `${r.size}: ${r.qty}` : `الكمية: ${r.qty}`}
+                          </span>
+                        ))}
+                      </div>
+
+                      <div className="flex items-center gap-4 text-sm mb-3" style={{ color: "#5A5648" }}>
+                        <span>المجموع: <b>{totalQty(it)}</b></span>
+                        {Number(it.price) > 0 && <span>السعر: <b>{Number(it.price).toLocaleString("ar-DZ")} د.ج</b></span>}
+                      </div>
+
+                      <div className="flex items-center gap-2 pt-2 border-t" style={{ borderColor: "#EFEAD9" }}>
+                        <button onClick={() => toggleStatus(it)} className="flex items-center gap-1 text-xs font-medium px-2 py-1.5 rounded" style={{ color: "#2C4A6E" }}>
+                          {it.status === "available" ? <XCircle /> : <CheckCircle2 />}
+                          {it.status === "available" ? "وضع كمباع" : "إعادة كمتوفر"}
+                        </button>
+                        <button onClick={() => startEdit(it)} className="flex items-center gap-1 text-xs font-medium px-2 py-1.5 rounded mr-auto" style={{ color: "#8A8272" }}>
+                          <Pencil /> تعديل
+                        </button>
+                        <button onClick={() => remove(it.id)} className="flex items-center gap-1 text-xs font-medium px-2 py-1.5 rounded" style={{ color: "#A64B2A" }}>
+                          <Trash2 />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </main>
         </div>
       );
     }
 
-    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+    function StatCard({ icon, label, value, color }) {
+      return (
+        <div className="rounded-lg p-4 bg-white border" style={{ borderColor: "#D9D0BA" }}>
+          <div className="w-8 h-8 rounded-md flex items-center justify-center mb-2" style={{ background: color + "22", color }}>
+            {icon}
+          </div>
+          <p className="text-xs mb-1" style={{ color: "#8A8272" }}>{label}</p>
+          <p className="brand-font text-xl font-extrabold" style={{ color: "#232323" }}>{value}</p>
+        </div>
+      );
+    }
+
+    function Field({ label, children }) {
+      return (
+        <label className="block">
+          <span className="block text-xs font-medium mb-1" style={{ color: "#5A5648" }}>{label}</span>
+          {children}
+        </label>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<ClothesInventory />);
   </script>
 </body>
 </html>
