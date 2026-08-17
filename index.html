@@ -486,7 +486,9 @@
 
     async function fetchData() {
       try {
-        const res = await fetch(API_URL);
+        // إضافة رقم عشوائي (Cache Busting) لمنع المتصفح من جلب بيانات قديمة
+        const urlWithCacheBusting = API_URL + "?t=" + new Date().getTime();
+        const res = await fetch(urlWithCacheBusting);
         const data = await res.json();
         allItems = Array.isArray(data) ? data : [];
         renderData();
@@ -636,9 +638,11 @@
       closeModal();
 
       try {
+        // إضافة redirect: 'follow' لضمان نجاح الاتصال
         await fetch(API_URL, {
           method: "POST",
           headers: { "Content-Type": "text/plain;charset=utf-8" },
+          redirect: "follow",
           body: JSON.stringify({ action: "save", item: newItem })
         });
       } catch (err) {
@@ -646,20 +650,20 @@
       }
     }
 
-    // دالة جديدة: تزويد المخزون بقطعة إضافية
     async function addPiece(id) {
       const item = allItems.find(i => i.id.toString() === id.toString());
       if (item) {
         let currentQty = Number(item.qty || 0);
-        currentQty += 1; // إضافة قطعة واحدة
+        currentQty += 1; 
         item.qty = currentQty;
-        item.status = "متوفر"; // بمجرد التزويد يصبح متوفراً
+        item.status = "متوفر"; 
         renderData();
 
         try {
           await fetch(API_URL, {
             method: "POST",
             headers: { "Content-Type": "text/plain;charset=utf-8" },
+            redirect: "follow",
             body: JSON.stringify({ action: "save", item: item })
           });
         } catch (err) {
@@ -668,13 +672,12 @@
       }
     }
 
-    // دالة: بيع قطعة واحدة
     async function sellPiece(id) {
       const item = allItems.find(i => i.id.toString() === id.toString());
       if (item) {
         let currentQty = Number(item.qty || 1);
         if (currentQty > 0) {
-          currentQty -= 1; // بيع قطعة واحدة
+          currentQty -= 1; 
           item.qty = currentQty;
           if (currentQty === 0) {
             item.status = "منتهي";
@@ -685,6 +688,7 @@
             await fetch(API_URL, {
               method: "POST",
               headers: { "Content-Type": "text/plain;charset=utf-8" },
+              redirect: "follow",
               body: JSON.stringify({ action: "save", item: item })
             });
           } catch (err) {
@@ -716,6 +720,7 @@
         await fetch(API_URL, {
           method: "POST",
           headers: { "Content-Type": "text/plain;charset=utf-8" },
+          redirect: "follow",
           body: JSON.stringify({ action: "delete", id: id })
         });
       } catch (err) {
