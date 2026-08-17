@@ -734,4 +734,262 @@
 
       if (filtered.length === 0) {
         container.innerHTML = `
-          <div style="text-align: center; padding: 3rem 1rem; colo
+          <div style="text-align: center; padding: 3rem 1rem; color: var(--text-muted);">
+            <i class="fas fa-tag" style="font-size: 3rem; color: #cbd5e1; margin-bottom: 1rem;"></i>
+            <div>لا توجد قطع مطابقة.</div>
+          </div>
+        `;
+        return;
+      }
+
+      filtered.forEach(item => {
+        const qty = Number(item.qty || 0);
+        const isOutOfStock = qty <= 0;
+
+        const div = document.createElement("div");
+        div.className = "product-card";
+
+        let subDetailsHtml = '';
+        if (userRole === "admin") {
+          subDetailsHtml = `
+            ${item.type || ''} 
+            ${item.size ? `| المقاس: <span class="size-badge">${item.size}</span>` : ''} 
+            | ${isOutOfStock ? '<span class="badge-out">منتهي (Out of stock)</span>' : `الكمية: <strong style="color:var(--text-dark); font-size:0.95rem;">${qty}</strong>`}
+          `;
+        } else {
+          subDetailsHtml = `
+            ${item.type || ''} 
+            ${item.size ? `| المقاس: <span class="size-badge">${item.size}</span>` : ''}
+          `;
+        }
+
+        let actionsHtml = '';
+        if (userRole === "admin") {
+          actionsHtml = `
+            <div class="action-btns">
+              <div class="action-row">
+                <button onclick="addPiece('${item.id}')" class="btn-action btn-add-qty" title="تزويد المخزون (+)">
+                  <i class="fas fa-plus"></i>
+                </button>
+                ${!isOutOfStock ? `
+                  <button onclick="sellPiece('${item.id}')" class="btn-action btn-sell" title="بيع قطعة (-)">
+                    <i class="fas fa-minus"></i>
+                  </button>
+                ` : ''}
+                <button onclick="openEditModal('${item.id}')" class="btn-action btn-edit" title="تعديل البيانات">
+                  <i class="fas fa-edit"></i>
+                </button>
+              </div>
+              <button onclick="promptDelete('${item.id}')" style="background:none; border:none; color:var(--danger); cursor:pointer; padding: 4px; font-size: 0.8rem;">
+                <i class="fas fa-trash"></i> حذف
+              </button>
+            </div>
+          `;
+        }
+
+        div.innerHTML = `
+          <img src="${item.image || 'https://via.placeholder.com/70'}" class="product-img">
+          <div class="product-details">
+            <div class="product-title">${item.desc || ''}</div>
+            <div class="product-sub">${subDetailsHtml}</div>
+            <div class="product-price">${item.price || 0} د.ج</div>
+          </div>
+          ${actionsHtml}
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    function setFilter(filter, btn) {
+      currentFilter = filter;
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderData();
+    }
+
+    function openAddModal() {
+      if (userRole !== "admin") return;
+      document.getElementById("modalTitle").innerText = "إضافة قطعة جديدة";
+      document.getElementById("pId").value = "";
+      document.getElementById("pDesc").value = "";
+      document.getElementById("pType").value = "";
+      document.getElementById("pSize").value = "";
+      document.getElementById("pPrice").value = "";
+      document.getElementById("pQty").value = "1";
+      document.getElementById("pImgFile").value = "";
+      base64Image = "";
+      document.getElementById("imgPreview").style.display = "none";
+      document.getElementById("fileLabel").innerHTML = `<i class="fas fa-camera"></i> اختار صورة من الجهاز`;
+      document.getElementById("btnSave").innerText = "حفظ";
+      document.getElementById("itemModal").style.display = "flex";
+    }
+
+    function openEditModal(id) {
+      if (userRole !== "admin") return;
+      const item = allItems.find(i => i.id.toString().trim() === id.toString().trim());
+      if (!item) return;
+
+      document.getElementById("modalTitle").innerText = "تعديل بيانات القطعة";
+      document.getElementById("pId").value = item.id;
+      document.getElementById("pDesc").value = item.desc || "";
+      document.getElementById("pType").value = item.type || "";
+      document.getElementById("pSize").value = item.size || "";
+      document.getElementById("pPrice").value = item.price || "";
+      document.getElementById("pQty").value = item.qty !== undefined ? item.qty : 1;
+      document.getElementById("pImgFile").value = "";
+      
+      base64Image = item.image || "";
+      if (base64Image) {
+        document.getElementById("imgPreview").src = base64Image;
+        document.getElementById("imgPreview").style.display = "block";
+        document.getElementById("fileLabel").innerHTML = `<i class="fas fa-check"></i> تغيير الصورة الحالية`;
+      } else {
+        document.getElementById("imgPreview").style.display = "none";
+        document.getElementById("fileLabel").innerHTML = `<i class="fas fa-camera"></i> اختار صورة من الجهاز`;
+      }
+
+      document.getElementById("btnSave").innerText = "حفظ التعديل";
+      document.getElementById("itemModal").style.display = "flex";
+    }
+
+    function closeModal() {
+      document.getElementById("itemModal").style.display = "none";
+    }
+
+    function previewAndCompressImage(event) {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const img = new Image();
+          img.onload = function() {
+            const canvas = document.createElement('canvas');
+            const maxWidth = 160;
+            const scaleSize = maxWidth / img.width;
+            
+            canvas.width = maxWidth;
+            canvas.height = img.height * scaleSize;
+
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            base64Image = canvas.toDataURL('image/jpeg', 0.5);
+
+            const preview = document.getElementById("imgPreview");
+            preview.src = base64Image;
+            preview.style.display = "block";
+            document.getElementById("fileLabel").innerHTML = `<i class="fas fa-check"></i> تم اختيار الصورة بنجاح`;
+          };
+          img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+
+    function sendDataToGoogle(payload) {
+      return fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        redirect: "follow",
+        body: JSON.stringify(payload)
+      });
+    }
+
+    async function handleFormSubmit(e) {
+      e.preventDefault();
+      if (userRole !== "admin") return;
+      const existingId = document.getElementById("pId").value.trim();
+      const qtyVal = Number(document.getElementById("pQty").value);
+      const itemId = existingId ? existingId : "item_" + Date.now();
+
+      const itemData = {
+        id: itemId,
+        desc: document.getElementById("pDesc").value,
+        type: document.getElementById("pType").value,
+        size: document.getElementById("pSize").value,
+        price: Number(document.getElementById("pPrice").value) || 0,
+        qty: qtyVal,
+        status: qtyVal > 0 ? "متوفر" : "منتهي",
+        image: base64Image
+      };
+
+      if (existingId) {
+        const index = allItems.findIndex(i => i.id.toString().trim() === existingId);
+        if (index > -1) allItems[index] = itemData;
+      } else {
+        allItems.unshift(itemData);
+      }
+
+      renderData();
+      closeModal();
+
+      try {
+        await sendDataToGoogle({ action: "save", item: itemData });
+      } catch (err) {
+        console.error("Save error:", err);
+      }
+    }
+
+    async function addPiece(id) {
+      if (userRole !== "admin") return;
+      const item = allItems.find(i => i.id.toString().trim() === id.toString().trim());
+      if (item) {
+        item.qty = Number(item.qty || 0) + 1;
+        item.status = "متوفر";
+        renderData();
+
+        try {
+          await sendDataToGoogle({ action: "save", item: item });
+        } catch (err) {
+          console.error("Update error:", err);
+        }
+      }
+    }
+
+    async function sellPiece(id) {
+      if (userRole !== "admin") return;
+      const item = allItems.find(i => i.id.toString().trim() === id.toString().trim());
+      if (item) {
+        let currentQty = Number(item.qty || 1);
+        if (currentQty > 0) {
+          currentQty -= 1;
+          item.qty = currentQty;
+          if (currentQty === 0) item.status = "منتهي";
+          renderData();
+
+          try {
+            await sendDataToGoogle({ action: "save", item: item });
+          } catch (err) {
+            console.error("Update error:", err);
+          }
+        }
+      }
+    }
+
+    function promptDelete(id) {
+      if (userRole !== "admin") return;
+      itemToDeleteId = id.toString().trim();
+      document.getElementById("deleteModal").style.display = "flex";
+    }
+
+    function closeDeleteModal() {
+      itemToDeleteId = null;
+      document.getElementById("deleteModal").style.display = "none";
+    }
+
+    document.getElementById("confirmDeleteBtn").onclick = async function() {
+      if (userRole !== "admin" || !itemToDeleteId) return;
+      const id = itemToDeleteId;
+      closeDeleteModal();
+
+      allItems = allItems.filter(i => i.id.toString().trim() !== id);
+      renderData();
+
+      try {
+        await sendDataToGoogle({ action: "delete", id: id });
+      } catch (err) {
+        console.error("Delete error:", err);
+      }
+    };
+  </script>
+</body>
+</html>
