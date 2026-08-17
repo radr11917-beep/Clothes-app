@@ -139,7 +139,9 @@
   </div>
 
   <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbxCUZ554jdDCdfQlVNCZTQhEq8E_L6k7-XraZ5NfY1bzmS0RgtWKnG_hV6vUbhWa5b55Q/exec";
+    // الرابط الجديد بعد منح الصلاحيات
+    const API_URL = "https://script.google.com/macros/s/AKfycbzIU3uF4gBsPnEiVni3NO8U3BOGDOwGyaepPepaE8NM-kfgtgY_UJZTf3tYQNLJzBjPKw/exec";
+    
     let allItems = []; let currentFilter = 'الكل'; let base64Image = ""; let itemToDeleteId = null;
 
     async function fetchData() {
@@ -235,12 +237,11 @@
       }
     }
 
-    // هنا تم وضع الحل السحري mode: "no-cors"
     function sendDataToGoogle(payload) {
       return fetch(API_URL, {
         method: "POST",
-        mode: "no-cors", 
         headers: { "Content-Type": "text/plain;charset=utf-8" },
+        redirect: "follow",
         body: JSON.stringify(payload)
       });
     }
@@ -260,15 +261,22 @@
       renderData();
       closeModal();
       
-      await sendDataToGoogle({ action: "save", item: newItem });
-      setTimeout(fetchData, 1500); // تحديث القائمة بعد ثانية ونصف للتأكد من وصولها لجوجل
+      try {
+        await sendDataToGoogle({ action: "save", item: newItem });
+        setTimeout(fetchData, 1500); 
+      } catch(err) {
+        console.error(err);
+      }
     }
 
     async function addPiece(id) {
       const item = allItems.find(i => i.id == id);
       if (item) {
         item.qty = Number(item.qty) + 1; item.status = "متوفر"; renderData();
-        await sendDataToGoogle({ action: "save", item: item });
+        try {
+          await sendDataToGoogle({ action: "save", item: item });
+          fetchData();
+        } catch(err) { console.error(err); }
       }
     }
 
@@ -276,7 +284,10 @@
       const item = allItems.find(i => i.id == id);
       if (item && Number(item.qty) > 0) {
         item.qty = Number(item.qty) - 1; if(item.qty === 0) item.status = "منتهي"; renderData();
-        await sendDataToGoogle({ action: "save", item: item });
+        try {
+          await sendDataToGoogle({ action: "save", item: item });
+          fetchData();
+        } catch(err) { console.error(err); }
       }
     }
 
@@ -288,7 +299,10 @@
       const id = itemToDeleteId;
       closeDeleteModal();
       allItems = allItems.filter(i => i.id != id); renderData();
-      await sendDataToGoogle({ action: "delete", id: id });
+      try {
+        await sendDataToGoogle({ action: "delete", id: id });
+        fetchData();
+      } catch(err) { console.error(err); }
     };
 
     fetchData();
