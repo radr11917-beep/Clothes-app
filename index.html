@@ -16,7 +16,6 @@
       --border: #cbd5e1;
       --danger: #ef4444;
       --success: #10b981;
-      --warning: #f59e0b;
     }
 
     * {
@@ -204,8 +203,17 @@
 
     .product-details { flex: 1; text-align: right; }
     .product-title { font-weight: bold; font-size: 0.95rem; }
-    .product-sub { font-size: 0.8rem; color: var(--text-muted); }
+    .product-sub { font-size: 0.8rem; color: var(--text-muted); margin-top: 2px; }
     .product-price { font-weight: bold; color: var(--success); margin-top: 4px; }
+    
+    .badge-out {
+      color: var(--danger);
+      font-weight: bold;
+      background: #fee2e2;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+    }
 
     .action-btns {
       display: flex;
@@ -214,10 +222,10 @@
       align-items: center;
     }
 
-    .btn-action-out {
-      background: #fef3c7;
-      color: #b45309;
-      border: 1px solid #fde68a;
+    .btn-sell {
+      background: #d1fae5;
+      color: #065f46;
+      border: 1px solid #a7f3d0;
       padding: 6px 10px;
       border-radius: 6px;
       font-size: 0.75rem;
@@ -228,8 +236,8 @@
       gap: 4px;
     }
 
-    .btn-action-out:hover {
-      background: #fde68a;
+    .btn-sell:hover {
+      background: #a7f3d0;
     }
 
     /* Modals */
@@ -395,8 +403,7 @@
     <div class="filters">
       <button class="filter-btn active" onclick="setFilter('الكل', this)">الكل</button>
       <button class="filter-btn" onclick="setFilter('متوفر', this)">متوفر</button>
-      <button class="filter-btn" onclick="setFilter('مباع', this)">مباع</button>
-      <button class="filter-btn" onclick="setFilter('منتهي', this)">منتهي</button>
+      <button class="filter-btn" onclick="setFilter('منتهي', this)">منتهي (Out of stock)</button>
     </div>
 
     <div id="productsGrid" class="products-grid"></div>
@@ -416,16 +423,12 @@
           <input type="text" id="pType" class="form-control" placeholder="قميص، سروال..." required>
         </div>
         <div class="form-group">
-          <label>السعر (د.ج)</label>
-          <input type="number" id="pPrice" class="form-control" required>
+          <label>الكمية الأولية</label>
+          <input type="number" id="pQty" class="form-control" value="1" min="1" required>
         </div>
         <div class="form-group">
-          <label>الحالة</label>
-          <select id="pStatus" class="form-control">
-            <option value="متوفر">متوفر</option>
-            <option value="مباع">مباع</option>
-            <option value="منتهي">منتهي</option>
-          </select>
+          <label>السعر للقطعة (د.ج)</label>
+          <input type="number" id="pPrice" class="form-control" required>
         </div>
         <div class="form-group">
           <label>صورة القطعة</label>
@@ -480,15 +483,23 @@
       const search = document.getElementById("searchInput").value.toLowerCase();
       
       const filtered = allItems.filter(item => {
-        const matchesFilter = currentFilter === 'الكل' || item.status === currentFilter;
+        const isOutOfStock = Number(item.qty || 0) <= 0 || item.status === 'منتهي';
+        const itemStatus = isOutOfStock ? 'منتهي' : 'متوفر';
+        
+        const matchesFilter = currentFilter === 'الكل' || itemStatus === currentFilter;
         const matchesSearch = (item.desc || '').toLowerCase().includes(search) || (item.type || '').toLowerCase().includes(search);
         return matchesFilter && matchesSearch;
       });
 
-      document.getElementById("totalCount").innerText = allItems.length;
-      const availableItems = allItems.filter(i => i.status === "متوفر");
-      document.getElementById("availableCount").innerText = availableItems.length;
-      const totalVal = availableItems.reduce((acc, i) => acc + Number(i.price || 0), 0);
+      // إحصائيات القطع المتبقية
+      const totalPieces = allItems.reduce((acc, i) => acc + Number(i.qty || 0), 0);
+      document.getElementById("totalCount").innerText = totalPieces;
+      
+      const availableItems = allItems.filter(i => Number(i.qty || 0) > 0);
+      const availablePieces = availableItems.reduce((acc, i) => acc + Number(i.qty || 0), 0);
+      document.getElementById("availableCount").innerText = availablePieces;
+
+      const totalVal = availableItems.reduce((acc, i) => acc + (Number(i.price || 0) * Number(i.qty || 0)), 0);
       document.getElementById("totalValue").innerText = totalVal;
 
       const container = document.getElementById("productsGrid");
@@ -505,19 +516,25 @@
       }
 
       filtered.forEach(item => {
+        const qty = Number(item.qty || 0);
+        const isOutOfStock = qty <= 0;
+
         const div = document.createElement("div");
         div.className = "product-card";
         div.innerHTML = `
           <img src="${item.image || 'https://via.placeholder.com/60'}" class="product-img">
           <div class="product-details">
             <div class="product-title">${item.desc || ''}</div>
-            <div class="product-sub">${item.type || ''} - <strong style="color: ${item.status === 'منتهي' ? 'var(--danger)' : 'inherit'}">${item.status || ''}</strong></div>
+            <div class="product-sub">
+              ${item.type || ''} | 
+              ${isOutOfStock ? '<span class="badge-out">Out of stock (منتهي)</span>' : `الكمية: <strong>${qty}</strong>`}
+            </div>
             <div class="product-price">${item.price || 0} د.ج</div>
           </div>
           <div class="action-btns">
-            ${item.status !== 'منتهي' ? `
-              <button onclick="markAsOutOfStock('${item.id}')" class="btn-action-out" title="تعليم كـ منتهي المخزون">
-                <i class="fas fa-ban"></i> نفاد
+            ${!isOutOfStock ? `
+              <button onclick="sellPiece('${item.id}')" class="btn-sell" title="بيع قطعة واحدة">
+                <i class="fas fa-shopping-cart"></i> بيع قطعة
               </button>
             ` : ''}
             <button onclick="promptDelete('${item.id}')" style="background:none; border:none; color:var(--danger); cursor:pointer; padding: 4px;">
@@ -582,12 +599,15 @@
       saveBtn.disabled = true;
       saveBtn.innerText = "جاري الحفظ...";
 
+      const qtyVal = Number(document.getElementById("pQty").value);
+
       const newItem = {
         id: Date.now().toString(),
         desc: document.getElementById("pDesc").value,
         type: document.getElementById("pType").value,
         price: document.getElementById("pPrice").value,
-        status: document.getElementById("pStatus").value,
+        qty: qtyVal,
+        status: qtyVal > 0 ? "متوفر" : "منتهي",
         image: base64Image
       };
 
@@ -606,20 +626,27 @@
       }
     }
 
-    async function markAsOutOfStock(id) {
+    async function sellPiece(id) {
       const item = allItems.find(i => i.id.toString() === id.toString());
       if (item) {
-        item.status = "منتهي";
-        renderData();
+        let currentQty = Number(item.qty || 1);
+        if (currentQty > 0) {
+          currentQty -= 1;
+          item.qty = currentQty;
+          if (currentQty === 0) {
+            item.status = "منتهي";
+          }
+          renderData();
 
-        try {
-          await fetch(API_URL, {
-            method: "POST",
-            headers: { "Content-Type": "text/plain;charset=utf-8" },
-            body: JSON.stringify({ action: "save", item: item })
-          });
-        } catch (err) {
-          console.error("Update error:", err);
+          try {
+            await fetch(API_URL, {
+              method: "POST",
+              headers: { "Content-Type": "text/plain;charset=utf-8" },
+              body: JSON.stringify({ action: "save", item: item })
+            });
+          } catch (err) {
+            console.error("Update error:", err);
+          }
         }
       }
     }
