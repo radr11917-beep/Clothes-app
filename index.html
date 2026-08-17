@@ -217,28 +217,43 @@
 
     .action-btns {
       display: flex;
-      flex-direction: column;
       gap: 6px;
       align-items: center;
+      flex-direction: column;
     }
 
-    .btn-sell {
-      background: #d1fae5;
-      color: #065f46;
-      border: 1px solid #a7f3d0;
-      padding: 6px 10px;
+    .action-row {
+      display: flex;
+      gap: 6px;
+    }
+
+    .btn-action {
+      padding: 6px 12px;
       border-radius: 6px;
-      font-size: 0.75rem;
+      font-size: 0.8rem;
       font-weight: bold;
       cursor: pointer;
       display: flex;
       align-items: center;
       gap: 4px;
+      border: 1px solid;
     }
 
-    .btn-sell:hover {
-      background: #a7f3d0;
+    .btn-sell {
+      background: #d1fae5;
+      color: #065f46;
+      border-color: #a7f3d0;
     }
+
+    .btn-sell:hover { background: #a7f3d0; }
+
+    .btn-add-qty {
+      background: #e0f2fe;
+      color: #0369a1;
+      border-color: #bae6fd;
+    }
+
+    .btn-add-qty:hover { background: #bae6fd; }
 
     /* Modals */
     .modal {
@@ -453,7 +468,7 @@
     <div class="modal-content" style="text-align: center;">
       <i class="fas fa-exclamation-triangle" style="font-size: 2.5rem; color: var(--danger); margin-bottom: 1rem;"></i>
       <div class="modal-header" style="text-align: center; margin-bottom: 0.5rem;">تأكيد الحذف</div>
-      <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.5rem;">هل أنت تأكد من رغبتك في حذف هذه القطعة؟</p>
+      <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.5rem;">هل أنت متأكد من رغبتك في حذف هذه القطعة بالكامل؟</p>
       <div class="modal-actions">
         <button type="button" class="btn-danger" id="confirmDeleteBtn">حذف</button>
         <button type="button" class="btn-cancel" onclick="closeDeleteModal()">إلغاء</button>
@@ -462,7 +477,6 @@
   </div>
 
   <script>
-    // الرابط الجديد الخاص بك هنا
     const API_URL = "https://script.google.com/macros/s/AKfycbxCUZ554jdDCdfQlVNCZTQhEq8E_L6k7-XraZ5NfY1bzmS0RgtWKnG_hV6vUbhWa5b55Q/exec";
     
     let allItems = [];
@@ -510,7 +524,7 @@
         container.innerHTML = `
           <div style="text-align: center; padding: 3rem 1rem; color: var(--text-muted);">
             <i class="fas fa-tag" style="font-size: 3rem; color: #cbd5e1; margin-bottom: 1rem;"></i>
-            <div>لا توجد قطع حالياً.</div>
+            <div>لا توجد قطع حالياً ضمن هذا التصفية.</div>
           </div>
         `;
         return;
@@ -528,18 +542,23 @@
             <div class="product-title">${item.desc || ''}</div>
             <div class="product-sub">
               ${item.type || ''} | 
-              ${isOutOfStock ? '<span class="badge-out">Out of stock (منتهي)</span>' : `الكمية: <strong>${qty}</strong>`}
+              ${isOutOfStock ? '<span class="badge-out">Out of stock (منتهي)</span>' : `الكمية: <strong style="font-size: 0.95rem; color:var(--text-dark);">${qty}</strong>`}
             </div>
             <div class="product-price">${item.price || 0} د.ج</div>
           </div>
           <div class="action-btns">
-            ${!isOutOfStock ? `
-              <button onclick="sellPiece('${item.id}')" class="btn-sell" title="بيع قطعة واحدة">
-                <i class="fas fa-shopping-cart"></i> بيع قطعة
+            <div class="action-row">
+              <button onclick="addPiece('${item.id}')" class="btn-action btn-add-qty" title="تزويد المخزون (+)">
+                <i class="fas fa-plus"></i>
               </button>
-            ` : ''}
-            <button onclick="promptDelete('${item.id}')" style="background:none; border:none; color:var(--danger); cursor:pointer; padding: 4px;">
-              <i class="fas fa-trash"></i>
+              ${!isOutOfStock ? `
+                <button onclick="sellPiece('${item.id}')" class="btn-action btn-sell" title="بيع قطعة (-)">
+                  <i class="fas fa-minus"></i>
+                </button>
+              ` : ''}
+            </div>
+            <button onclick="promptDelete('${item.id}')" style="background:none; border:none; color:var(--danger); cursor:pointer; padding: 4px; font-size: 0.8rem;">
+              <i class="fas fa-trash"></i> حذف المنتج
             </button>
           </div>
         `;
@@ -627,12 +646,35 @@
       }
     }
 
+    // دالة جديدة: تزويد المخزون بقطعة إضافية
+    async function addPiece(id) {
+      const item = allItems.find(i => i.id.toString() === id.toString());
+      if (item) {
+        let currentQty = Number(item.qty || 0);
+        currentQty += 1; // إضافة قطعة واحدة
+        item.qty = currentQty;
+        item.status = "متوفر"; // بمجرد التزويد يصبح متوفراً
+        renderData();
+
+        try {
+          await fetch(API_URL, {
+            method: "POST",
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify({ action: "save", item: item })
+          });
+        } catch (err) {
+          console.error("Update error:", err);
+        }
+      }
+    }
+
+    // دالة: بيع قطعة واحدة
     async function sellPiece(id) {
       const item = allItems.find(i => i.id.toString() === id.toString());
       if (item) {
         let currentQty = Number(item.qty || 1);
         if (currentQty > 0) {
-          currentQty -= 1;
+          currentQty -= 1; // بيع قطعة واحدة
           item.qty = currentQty;
           if (currentQty === 0) {
             item.status = "منتهي";
