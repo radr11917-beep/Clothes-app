@@ -266,6 +266,46 @@
       background-color: #fff;
     }
 
+    /* File Input Styling */
+    .file-input-wrapper {
+      position: relative;
+      width: 100%;
+    }
+
+    .file-input-label {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px;
+      background-color: #f8fafc;
+      border: 2px dashed var(--border);
+      border-radius: 8px;
+      cursor: pointer;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      font-weight: 600;
+      transition: all 0.2s ease;
+    }
+
+    .file-input-label:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+      background-color: #f1f5f9;
+    }
+
+    .file-input {
+      display: none;
+    }
+
+    .image-preview {
+      margin-top: 8px;
+      max-height: 100px;
+      border-radius: 6px;
+      display: none;
+      object-fit: cover;
+    }
+
     .modal-actions {
       display: flex;
       flex-direction: row-reverse;
@@ -393,8 +433,14 @@
           </select>
         </div>
         <div class="form-group">
-          <label>رابط الصورة</label>
-          <input type="url" id="pImg" class="form-control">
+          <label>صورة القطعة</label>
+          <div class="file-input-wrapper">
+            <label for="pImgFile" class="file-input-label" id="fileLabel">
+              <i class="fas fa-camera"></i> اختار صورة من الجهاز
+            </label>
+            <input type="file" id="pImgFile" class="file-input" accept="image/*" onchange="previewImage(event)">
+          </div>
+          <img id="imgPreview" class="image-preview" alt="معاينة الصورة">
         </div>
         <div class="modal-actions">
           <button type="submit" class="btn-save">حفظ</button>
@@ -408,6 +454,7 @@
     const API_URL = "https://script.google.com/macros/s/AKfycbzyzl-JUXOmxMeDZxzn00ygPV3pyYAL6qcNGNRBbpetwuqU8Gew2wGnxU-zXCV_xkNMoQ/exec";
     let allItems = [];
     let currentFilter = 'الكل';
+    let base64Image = "";
 
     async function fetchData() {
       try {
@@ -472,8 +519,33 @@
       renderData();
     }
 
-    function openModal() { document.getElementById("itemModal").style.display = "flex"; }
-    function closeModal() { document.getElementById("itemModal").style.display = "none"; }
+    function openModal() { 
+      document.getElementById("itemModal").style.display = "flex"; 
+    }
+
+    function closeModal() { 
+      document.getElementById("itemModal").style.display = "none";
+      // Reset Image Form
+      base64Image = "";
+      document.getElementById("pImgFile").value = "";
+      document.getElementById("imgPreview").style.display = "none";
+      document.getElementById("fileLabel").innerHTML = `<i class="fas fa-camera"></i> اختار صورة من الجهاز`;
+    }
+
+    function previewImage(event) {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          base64Image = e.target.result;
+          const preview = document.getElementById("imgPreview");
+          preview.src = base64Image;
+          preview.style.display = "block";
+          document.getElementById("fileLabel").innerHTML = `<i class="fas fa-check"></i> تم اختيار الصورة`;
+        };
+        reader.readAsDataURL(file);
+      }
+    }
 
     async function handleSave(e) {
       e.preventDefault();
@@ -485,7 +557,7 @@
           type: document.getElementById("pType").value,
           price: document.getElementById("pPrice").value,
           status: document.getElementById("pStatus").value,
-          image: document.getElementById("pImg").value
+          image: base64Image
         }
       };
 
