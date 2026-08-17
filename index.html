@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>سجل الملابس</title>
+  <title>Youth Style - سجل الملابس</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -16,21 +16,9 @@
   <script type="text/babel">
     const { useState, useEffect, useMemo, useRef } = React;
 
-    // محاكاة Lucide Icons
-    const Plus = () => <span>➕</span>;
-    const Trash2 = () => <span>🗑️</span>;
-    const Pencil = () => <span>✏️</span>;
-    const Search = () => <span>🔍</span>;
-    const Package = () => <span>📦</span>;
-    const Wallet = () => <span>💰</span>;
-    const CheckCircle2 = () => <span>✅</span>;
-    const XCircle = () => <span>❌</span>;
-    const Tag = () => <span>🏷️</span>;
-    const X = () => <span>✖</span>;
-    const ImagePlus = () => <span>🖼️</span>;
-    const ImageOff = () => <span>🚫</span>;
+    // رابط شعار Youth Style
+    const LOGO_URL = "https://i.ibb.co/L9C17yJ/youth-style-logo.png"; // يمكن استبداله برابط الشعار الخاص بك إن وجد
 
-    // إعداد التخزين المحلي LocalStorage
     if (!window.storage) {
       window.storage = {
         async list(prefix) {
@@ -70,15 +58,21 @@
         loadAll();
       }, []);
 
+      useEffect(() => {
+        if (window.lucide) {
+          window.lucide.createIcons();
+        }
+      });
+
       const loadAll = async () => {
         setLoading(true);
         try {
-          const listRes = await window.storage.list("item:", true);
+          const listRes = await window.storage.list("item:");
           const keys = (listRes && listRes.keys) || [];
           const loaded = [];
           for (const k of keys) {
             try {
-              const res = await window.storage.get(k, true);
+              const res = await window.storage.get(k);
               if (res && res.value) loaded.push(JSON.parse(res.value));
             } catch (e) {}
           }
@@ -96,7 +90,7 @@
       const saveItem = async (item) => {
         setSaving(true);
         try {
-          const res = await window.storage.set("item:" + item.id, JSON.stringify(item), true);
+          const res = await window.storage.set("item:" + item.id, JSON.stringify(item));
           if (!res) throw new Error("save failed");
           setErr("");
           return true;
@@ -185,7 +179,7 @@
 
       const remove = async (id) => {
         try {
-          await window.storage.delete("item:" + id, true);
+          await window.storage.delete("item:" + id);
           setItems((prev) => prev.filter((it) => it.id !== id));
         } catch (e) {
           setErr("تعذر حذف القطعة.");
@@ -214,9 +208,9 @@
       }, [items]);
 
       return (
-        <div dir="rtl" className="min-h-screen" style={{ background: "#EDE7D8", fontFamily: "'IBM Plex Sans Arabic', sans-serif" }}>
+        <div dir="rtl" className="min-h-screen pb-10" style={{ background: "#F4F5F7", fontFamily: "'IBM Plex Sans Arabic', sans-serif" }}>
           <style>{`
-            @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@600;800&family=IBM+Plex+Sans+Arabic:wght@400;500;600&display=swap');
+            @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@700;900&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap');
             .brand-font { font-family: 'Cairo', sans-serif; }
             .tag-card { position: relative; }
             .tag-card::before {
@@ -227,55 +221,61 @@
               width: 10px;
               height: 10px;
               border-radius: 50%;
-              background: #EDE7D8;
-              border: 2px solid #2C4A6E;
+              background: #F4F5F7;
+              border: 2px solid #112A46;
               z-index: 2;
             }
-            .input { width: 100%; padding: 9px 12px; border-radius: 6px; border: 1px solid #D9D0BA; font-size: 14px; outline: none; background: #FBFAF6; }
-            .input:focus { border-color: #2C4A6E; }
+            .input { width: 100%; padding: 9px 12px; border-radius: 8px; border: 1px solid #D0D7DE; font-size: 14px; outline: none; background: #FFFFFF; }
+            .input:focus { border-color: #112A46; ring: 2px solid #EBAA2B; }
           `}</style>
 
-          <header className="px-5 pt-8 pb-6" style={{ background: "#232323" }}>
+          {/* Header Theme Youth Style */}
+          <header className="px-5 pt-6 pb-6 shadow-md" style={{ background: "#112A46" }}>
             <div className="max-w-5xl mx-auto flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-11 h-11 rounded-md flex items-center justify-center rotate-[-8deg]" style={{ background: "#C89B3C" }}>
-                  <Tag />
+                {/* SVG Logo Graphic Youth Style */}
+                <div className="w-12 h-12 rounded-full flex items-center justify-center shadow-lg overflow-hidden border-2 border-[#EBAA2B]" style={{ background: "#112A46" }}>
+                  <svg viewBox="0 0 100 100" className="w-full h-full p-1">
+                    <circle cx="50" cy="50" r="48" fill="#112A46" />
+                    <text x="50%" y="45%" textAnchor="middle" fill="#FFFFFF" fontSize="22" fontWeight="900" fontFamily="sans-serif">YOUTH</text>
+                    <text x="50%" y="68%" textAnchor="middle" fill="#EBAA2B" fontSize="20" fontWeight="900" fontFamily="sans-serif">STYLE</text>
+                  </svg>
                 </div>
                 <div>
-                  <h1 className="brand-font text-2xl font-extrabold" style={{ color: "#EDE7D8" }}>سجل الملابس</h1>
-                  <p className="text-sm" style={{ color: "#B5AD98" }}>مخزون مشترك — جاهز للبيع</p>
+                  <h1 className="brand-font text-2xl font-black tracking-wide" style={{ color: "#FFFFFF" }}>YOUTH STYLE</h1>
+                  <p className="text-xs font-medium" style={{ color: "#EBAA2B" }}>سجل وتتبع المخزون</p>
                 </div>
               </div>
               <button
                 onClick={() => { setShowForm(true); setForm(EMPTY_FORM); setEditingId(null); }}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-md font-semibold text-sm transition active:scale-95"
-                style={{ background: "#C89B3C", color: "#232323" }}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-lg font-bold text-sm shadow-md transition active:scale-95"
+                style={{ background: "#EBAA2B", color: "#112A46" }}
               >
-                <Plus /> إضافة قطعة
+                <i data-lucide="plus" className="w-4 h-4 stroke-[3]"></i> إضافة قطعة
               </button>
             </div>
           </header>
 
           <main className="max-w-5xl mx-auto px-5 py-6">
             <div className="grid grid-cols-3 gap-3 mb-6">
-              <StatCard icon={<Package />} label="إجمالي القطع" value={stats.totalPieces} color="#2C4A6E" />
-              <StatCard icon={<CheckCircle2 />} label="متوفرة" value={stats.availablePieces} color="#4B7A55" />
-              <StatCard icon={<Wallet />} label="قيمة المتوفر (د.ج)" value={stats.totalValue.toLocaleString("ar-DZ")} color="#C89B3C" />
+              <StatCard icon="package" label="إجمالي القطع" value={stats.totalPieces} color="#112A46" />
+              <StatCard icon="check-circle-2" label="متوفرة" value={stats.availablePieces} color="#2E7D32" />
+              <StatCard icon="wallet" label="قيمة المتوفر (د.ج)" value={stats.totalValue.toLocaleString("ar-DZ")} color="#EBAA2B" textColor="#112A46" />
             </div>
 
             {err && (
-              <div className="mb-4 px-4 py-2 rounded-md text-sm" style={{ background: "#F3D9CE", color: "#A64B2A" }}>{err}</div>
+              <div className="mb-4 px-4 py-2 rounded-lg text-sm font-medium" style={{ background: "#FFEBEE", color: "#C62828" }}>{err}</div>
             )}
 
             <div className="flex flex-col sm:flex-row gap-3 mb-6">
-              <div className="flex items-center gap-2 flex-1 px-3 py-2.5 rounded-md bg-white border" style={{ borderColor: "#D9D0BA" }}>
-                <Search />
+              <div className="flex items-center gap-2 flex-1 px-3 py-2.5 rounded-lg bg-white border shadow-sm" style={{ borderColor: "#D0D7DE" }}>
+                <i data-lucide="search" className="w-4 h-4 text-[#6E7781]"></i>
                 <input
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder="ابحث عن نوع أو وصف..."
                   className="flex-1 outline-none text-sm bg-transparent"
-                  style={{ color: "#232323" }}
+                  style={{ color: "#112A46" }}
                 />
               </div>
               <div className="flex gap-2">
@@ -287,8 +287,8 @@
                   <button
                     key={f.key}
                     onClick={() => setFilter(f.key)}
-                    className="px-4 py-2 rounded-md text-sm font-medium transition"
-                    style={filter === f.key ? { background: "#2C4A6E", color: "#EDE7D8" } : { background: "#F7F3E9", color: "#5A5648", border: "1px solid #D9D0BA" }}
+                    className="px-4 py-2 rounded-lg text-sm font-bold transition shadow-sm"
+                    style={filter === f.key ? { background: "#112A46", color: "#FFFFFF" } : { background: "#FFFFFF", color: "#424242", border: "1px solid #D0D7DE" }}
                   >
                     {f.label}
                   </button>
@@ -297,24 +297,24 @@
             </div>
 
             {showForm && (
-              <form onSubmit={submit} className="mb-6 p-5 rounded-lg bg-white border" style={{ borderColor: "#D9D0BA" }}>
+              <form onSubmit={submit} className="mb-6 p-5 rounded-xl bg-white border shadow-md" style={{ borderColor: "#D0D7DE" }}>
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="brand-font font-bold text-lg" style={{ color: "#232323" }}>{editingId ? "تعديل القطعة" : "قطعة جديدة"}</h2>
-                  <button type="button" onClick={resetForm}><X /></button>
+                  <h2 className="brand-font font-bold text-lg" style={{ color: "#112A46" }}>{editingId ? "تعديل القطعة" : "قطعة جديدة"}</h2>
+                  <button type="button" onClick={resetForm}><i data-lucide="x" className="w-5 h-5 text-[#6E7781]"></i></button>
                 </div>
 
                 <div className="mb-4">
-                  <span className="block text-xs font-medium mb-1" style={{ color: "#5A5648" }}>صورة القطعة</span>
+                  <span className="block text-xs font-semibold mb-1" style={{ color: "#424242" }}>صورة القطعة</span>
                   <div className="flex items-center gap-3">
                     <div
                       onClick={() => fileRef.current && fileRef.current.click()}
-                      className="w-24 h-24 rounded-md flex items-center justify-center cursor-pointer overflow-hidden shrink-0"
-                      style={{ background: "#F7F3E9", border: "1px dashed #D9D0BA" }}
+                      className="w-24 h-24 rounded-lg flex items-center justify-center cursor-pointer overflow-hidden shrink-0 shadow-inner"
+                      style={{ background: "#F4F5F7", border: "2px dashed #D0D7DE" }}
                     >
                       {form.image ? (
                         <img src={form.image} alt="معاينة" className="w-full h-full object-cover" />
                       ) : (
-                        <ImagePlus />
+                        <i data-lucide="image-plus" className="w-6 h-6 text-[#6E7781]"></i>
                       )}
                     </div>
                     <input
@@ -325,12 +325,12 @@
                       onChange={(e) => handleImageFile(e.target.files[0])}
                     />
                     <div className="flex flex-col gap-1">
-                      <button type="button" onClick={() => fileRef.current && fileRef.current.click()} className="text-xs font-medium px-3 py-1.5 rounded-md" style={{ background: "#F7F3E9", color: "#2C4A6E", border: "1px solid #D9D0BA" }}>
+                      <button type="button" onClick={() => fileRef.current && fileRef.current.click()} className="text-xs font-bold px-3 py-1.5 rounded-lg shadow-sm" style={{ background: "#F4F5F7", color: "#112A46", border: "1px solid #D0D7DE" }}>
                         {form.image ? "تغيير الصورة" : "اختيار صورة"}
                       </button>
                       {form.image && (
-                        <button type="button" onClick={() => setForm((f) => ({ ...f, image: null }))} className="flex items-center gap-1 text-xs font-medium" style={{ color: "#A64B2A" }}>
-                          <ImageOff /> إزالة الصورة
+                        <button type="button" onClick={() => setForm((f) => ({ ...f, image: null }))} className="flex items-center gap-1 text-xs font-semibold mt-1" style={{ color: "#C62828" }}>
+                          <i data-lucide="image-off" className="w-3.5 h-3.5"></i> إزالة الصورة
                         </button>
                       )}
                     </div>
@@ -339,10 +339,10 @@
 
                 <div className="grid sm:grid-cols-2 gap-3 mb-4">
                   <Field label="نوع الملابس *">
-                    <input required value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })} placeholder="مثال: قميص، بنطال، جاكيت" className="input" />
+                    <input required value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })} placeholder="مثال: قميص، بنطال، هودي" className="input" />
                   </Field>
                   <Field label="الوصف">
-                    <input value={form.desc} onChange={(e) => setForm({ ...form, desc: e.target.value })} placeholder="مثال: أزرق قطن رجالي" className="input" />
+                    <input value={form.desc} onChange={(e) => setForm({ ...form, desc: e.target.value })} placeholder="مثال: كحلي قطن Youth Style" className="input" />
                   </Field>
                   <Field label="السعر للقطعة (د.ج)">
                     <input type="number" min="0" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} className="input" />
@@ -356,14 +356,14 @@
                 </div>
 
                 <div className="mb-4">
-                  <span className="block text-xs font-medium mb-2" style={{ color: "#5A5648" }}>المقاسات والكميات</span>
+                  <span className="block text-xs font-semibold mb-2" style={{ color: "#424242" }}>المقاسات والكميات</span>
                   <div className="flex flex-col gap-2">
                     {form.sizes.map((row, idx) => (
                       <div key={idx} className="flex items-center gap-2">
                         <input
                           value={row.size}
                           onChange={(e) => updateSizeRow(idx, "size", e.target.value)}
-                          placeholder="المقاس (مثال: M، 42، مقاس واحد)"
+                          placeholder="المقاس (مثال: S, M, L, XL)"
                           className="input flex-1"
                         />
                         <input
@@ -377,48 +377,48 @@
                         />
                         {form.sizes.length > 1 && (
                           <button type="button" onClick={() => removeSizeRow(idx)}>
-                            <Trash2 />
+                            <i data-lucide="trash-2" className="w-4 h-4 text-[#C62828]"></i>
                           </button>
                         )}
                       </div>
                     ))}
                   </div>
-                  <button type="button" onClick={addSizeRow} className="mt-2 flex items-center gap-1 text-xs font-medium" style={{ color: "#2C4A6E" }}>
-                    <Plus /> إضافة مقاس آخر
+                  <button type="button" onClick={addSizeRow} className="mt-2 flex items-center gap-1 text-xs font-bold" style={{ color: "#112A46" }}>
+                    <i data-lucide="plus" className="w-3.5 h-3.5"></i> إضافة مقاس آخر
                   </button>
                 </div>
 
-                <button type="submit" disabled={saving} className="px-5 py-2.5 rounded-md font-semibold text-sm disabled:opacity-60" style={{ background: "#2C4A6E", color: "#EDE7D8" }}>
+                <button type="submit" disabled={saving} className="w-full py-2.5 rounded-lg font-bold text-sm shadow-md transition disabled:opacity-60" style={{ background: "#112A46", color: "#EBAA2B" }}>
                   {saving ? "جارِ الحفظ..." : editingId ? "حفظ التعديلات" : "إضافة إلى المخزون"}
                 </button>
               </form>
             )}
 
             {loading ? (
-              <p className="text-center py-10 text-sm" style={{ color: "#8A8272" }}>جارِ التحميل...</p>
+              <p className="text-center py-10 text-sm font-medium" style={{ color: "#6E7781" }}>جارِ التحميل...</p>
             ) : filtered.length === 0 ? (
               <div className="text-center py-16">
-                <Tag />
-                <p style={{ color: "#8A8272" }}>{items.length === 0 ? "لا توجد قطع بعد. أضف أول قطعة لملابسك." : "لا توجد نتائج مطابقة."}</p>
+                <i data-lucide="tag" className="w-10 h-10 text-[#D0D7DE] mx-auto mb-3"></i>
+                <p font-medium style={{ color: "#6E7781" }}>{items.length === 0 ? "لا توجد قطع بعد. أضف أول قطعة لمخزون Youth Style." : "لا توجد نتائج مطابقة."}</p>
               </div>
             ) : (
               <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {filtered.map((it) => (
-                  <div key={it.id} className="tag-card rounded-lg overflow-hidden bg-white border shadow-sm" style={{ borderColor: "#D9D0BA" }}>
+                  <div key={it.id} className="tag-card rounded-xl overflow-hidden bg-white border shadow-sm hover:shadow-md transition" style={{ borderColor: "#D0D7DE" }}>
                     {it.image && (
-                      <div className="w-full h-36 overflow-hidden" style={{ background: "#F7F3E9" }}>
+                      <div className="w-full h-40 overflow-hidden" style={{ background: "#F4F5F7" }}>
                         <img src={it.image} alt={it.type} className="w-full h-full object-cover" />
                       </div>
                     )}
                     <div className="p-4 pt-5">
                       <div className="flex items-start justify-between mb-2">
                         <div>
-                          <h3 className="font-bold text-base" style={{ color: "#232323" }}>{it.type}</h3>
-                          {it.desc && <p className="text-xs mt-0.5" style={{ color: "#8A8272" }}>{it.desc}</p>}
+                          <h3 className="font-bold text-base" style={{ color: "#112A46" }}>{it.type}</h3>
+                          {it.desc && <p className="text-xs font-medium mt-0.5" style={{ color: "#6E7781" }}>{it.desc}</p>}
                         </div>
                         <span
-                          className="text-xs px-2 py-1 rounded-full font-medium shrink-0"
-                          style={it.status === "available" ? { background: "#E3EEDF", color: "#4B7A55" } : { background: "#F3D9CE", color: "#A64B2A" }}
+                          className="text-xs px-2.5 py-1 rounded-full font-bold shrink-0 shadow-xs"
+                          style={it.status === "available" ? { background: "#E8F5E9", color: "#2E7D32" } : { background: "#FFEBEE", color: "#C62828" }}
                         >
                           {it.status === "available" ? "متوفر" : "مباع"}
                         </span>
@@ -426,27 +426,27 @@
 
                       <div className="flex flex-wrap gap-1.5 mb-3">
                         {(it.sizes || []).map((r, i) => (
-                          <span key={i} className="text-xs px-2 py-1 rounded" style={{ background: "#F7F3E9", color: "#5A5648", border: "1px solid #EFEAD9" }}>
+                          <span key={i} className="text-xs px-2 py-1 rounded-md font-semibold" style={{ background: "#F4F5F7", color: "#112A46", border: "1px solid #E1E4E8" }}>
                             {r.size ? `${r.size}: ${r.qty}` : `الكمية: ${r.qty}`}
                           </span>
                         ))}
                       </div>
 
-                      <div className="flex items-center gap-4 text-sm mb-3" style={{ color: "#5A5648" }}>
+                      <div className="flex items-center gap-4 text-sm mb-3 font-medium" style={{ color: "#424242" }}>
                         <span>المجموع: <b>{totalQty(it)}</b></span>
-                        {Number(it.price) > 0 && <span>السعر: <b>{Number(it.price).toLocaleString("ar-DZ")} د.ج</b></span>}
+                        {Number(it.price) > 0 && <span>السعر: <b style={{ color: "#112A46" }}>{Number(it.price).toLocaleString("ar-DZ")} د.ج</b></span>}
                       </div>
 
-                      <div className="flex items-center gap-2 pt-2 border-t" style={{ borderColor: "#EFEAD9" }}>
-                        <button onClick={() => toggleStatus(it)} className="flex items-center gap-1 text-xs font-medium px-2 py-1.5 rounded" style={{ color: "#2C4A6E" }}>
-                          {it.status === "available" ? <XCircle /> : <CheckCircle2 />}
+                      <div className="flex items-center gap-2 pt-3 border-t" style={{ borderColor: "#F0F0F0" }}>
+                        <button onClick={() => toggleStatus(it)} className="flex items-center gap-1 text-xs font-bold px-2 py-1.5 rounded-lg" style={{ color: "#112A46", background: "#F4F5F7" }}>
+                          <i data-lucide={it.status === "available" ? "x-circle" : "check-circle-2"} className="w-3.5 h-3.5"></i>
                           {it.status === "available" ? "وضع كمباع" : "إعادة كمتوفر"}
                         </button>
-                        <button onClick={() => startEdit(it)} className="flex items-center gap-1 text-xs font-medium px-2 py-1.5 rounded mr-auto" style={{ color: "#8A8272" }}>
-                          <Pencil /> تعديل
+                        <button onClick={() => startEdit(it)} className="flex items-center gap-1 text-xs font-semibold px-2 py-1.5 rounded-lg mr-auto" style={{ color: "#6E7781" }}>
+                          <i data-lucide="pencil" className="w-3.5 h-3.5"></i> تعديل
                         </button>
-                        <button onClick={() => remove(it.id)} className="flex items-center gap-1 text-xs font-medium px-2 py-1.5 rounded" style={{ color: "#A64B2A" }}>
-                          <Trash2 />
+                        <button onClick={() => remove(it.id)} className="flex items-center gap-1 text-xs font-semibold px-2 py-1.5 rounded-lg" style={{ color: "#C62828" }}>
+                          <i data-lucide="trash-2" className="w-3.5 h-3.5"></i>
                         </button>
                       </div>
                     </div>
@@ -459,14 +459,14 @@
       );
     }
 
-    function StatCard({ icon, label, value, color }) {
+    function StatCard({ icon, label, value, color, textColor }) {
       return (
-        <div className="rounded-lg p-4 bg-white border" style={{ borderColor: "#D9D0BA" }}>
-          <div className="w-8 h-8 rounded-md flex items-center justify-center mb-2" style={{ background: color + "22", color }}>
-            {icon}
+        <div className="rounded-xl p-4 bg-white border shadow-sm" style={{ borderColor: "#D0D7DE" }}>
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center mb-2" style={{ background: color + "22", color }}>
+            <i data-lucide={icon} className="w-4.5 h-4.5"></i>
           </div>
-          <p className="text-xs mb-1" style={{ color: "#8A8272" }}>{label}</p>
-          <p className="brand-font text-xl font-extrabold" style={{ color: "#232323" }}>{value}</p>
+          <p className="text-xs font-semibold mb-1" style={{ color: "#6E7781" }}>{label}</p>
+          <p className="brand-font text-xl font-black" style={{ color: textColor || "#112A46" }}>{value}</p>
         </div>
       );
     }
@@ -474,7 +474,7 @@
     function Field({ label, children }) {
       return (
         <label className="block">
-          <span className="block text-xs font-medium mb-1" style={{ color: "#5A5648" }}>{label}</span>
+          <span className="block text-xs font-semibold mb-1" style={{ color: "#424242" }}>{label}</span>
           {children}
         </label>
       );
