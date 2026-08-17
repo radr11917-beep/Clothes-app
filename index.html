@@ -462,7 +462,9 @@
   </div>
 
   <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbzUYILgqSOYKBgFXmwIGlXQylmAfFkIp09oJknX1yRJivGM1fUtwa4e4FHy_DBic48ffA/exec";
+    // الرابط الجديد الخاص بك
+    const API_URL = "https://script.google.com/macros/s/AKfycbztwvDt2UoJmOixtErInOzfc1UNKJpfELZ9FMdW1E2rMZ2cxRFefZcdB1zUFhQlcychnw/exec";
+    
     let allItems = [];
     let currentFilter = 'الكل';
     let base64Image = "";
@@ -491,7 +493,6 @@
         return matchesFilter && matchesSearch;
       });
 
-      // إحصائيات القطع المتبقية
       const totalPieces = allItems.reduce((acc, i) => acc + Number(i.qty || 0), 0);
       document.getElementById("totalCount").innerText = totalPieces;
       
