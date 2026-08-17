@@ -17,26 +17,36 @@
 
     function App() {
       const [items, setItems] = useState(() => {
-        const saved = localStorage.getItem('clothes_v3');
-        return saved ? JSON.parse(saved) : [
-          { id: 1, type: 'قميص أسود XL', price: 2500, status: 'متوفر' },
-          { id: 2, type: 'سروال جينز', price: 3800, status: 'تم البيع' }
-        ];
+        const saved = localStorage.getItem('clothes_v4');
+        return saved ? JSON.parse(saved) : [];
       });
       const [type, setType] = useState('');
       const [price, setPrice] = useState('');
+      const [size, setSize] = useState('M');
+      const [image, setImage] = useState(null);
       const [filter, setFilter] = useState('الكل');
 
       useEffect(() => {
-        localStorage.setItem('clothes_v3', JSON.stringify(items));
+        localStorage.setItem('clothes_v4', JSON.stringify(items));
       }, [items]);
+
+      const handleImageUpload = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onloadend = () => setImage(reader.result);
+          reader.readAsDataURL(file);
+        }
+      };
 
       const addItem = (e) => {
         e.preventDefault();
         if (!type || !price) return;
-        setItems([{ id: Date.now(), type, price: Number(price), status: 'متوفر' }, ...items]);
+        setItems([{ id: Date.now(), type, price: Number(price), size, image, status: 'متوفر' }, ...items]);
         setType('');
         setPrice('');
+        setSize('M');
+        setImage(null);
       };
 
       const toggleStatus = (id) => {
@@ -53,12 +63,12 @@
 
       return (
         <div class="max-w-md mx-auto p-4 space-y-4">
-          {/* هيدر متطور */}
+          <!-- الهيدر الإحصائي -->
           <div class="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-3xl p-5 text-white shadow-lg shadow-blue-500/20">
             <div class="flex justify-between items-center mb-4">
               <div>
                 <h1 class="text-xl font-black">مخزون الملابس 🛍️</h1>
-                <p class="text-xs text-blue-100 opacity-80">لوحة التحكم السريعة</p>
+                <p class="text-xs text-blue-100 opacity-80">إدارة الصور والمقاسات</p>
               </div>
               <span class="bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-xs font-bold">
                 {items.length} قطعة
@@ -77,33 +87,58 @@
             </div>
           </div>
 
-          {/* نموذج إدخال عصري */}
+          <!-- نموذج الإضافة مع الصورة والمقاس -->
           <form onSubmit={addItem} class="bg-white rounded-3xl p-4 shadow-sm border border-slate-200/80 space-y-3">
-            <h2 class="text-xs font-bold text-slate-400 uppercase tracking-wider">إضافة سلعة جديدة</h2>
-            <div class="grid grid-cols-3 gap-2">
+            <h2 class="text-xs font-bold text-slate-400 uppercase tracking-wider">إضافة قطعة جديدة</h2>
+            
+            <div class="grid grid-cols-2 gap-2">
               <input 
                 type="text" 
                 value={type} 
                 onChange={(e) => setType(e.target.value)} 
-                placeholder="النوع (مثال: قميص)" 
-                class="col-span-2 bg-slate-50 border border-slate-200 rounded-2xl px-3 py-2.5 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                placeholder="نوع القطعة (قميص، سروال...)" 
+                class="bg-slate-50 border border-slate-200 rounded-2xl px-3 py-2.5 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500" 
                 required 
               />
               <input 
                 type="number" 
                 value={price} 
                 onChange={(e) => setPrice(e.target.value)} 
-                placeholder="السعر" 
+                placeholder="السعر (د.ج)" 
                 class="bg-slate-50 border border-slate-200 rounded-2xl px-3 py-2.5 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500" 
                 required 
               />
             </div>
+
+            <div class="grid grid-cols-2 gap-2 items-center">
+              <div>
+                <label class="text-[10px] text-slate-400 font-bold mb-1 block">المقاس:</label>
+                <select 
+                  value={size} 
+                  onChange={(e) => setSize(e.target.value)} 
+                  class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3 py-2 text-xs font-bold text-slate-700 focus:outline-none"
+                >
+                  {['S', 'M', 'L', 'XL', 'XXL', '38', '40', '42', '44'].map(sz => (
+                    <option key={sz} value={sz}>{sz}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label class="text-[10px] text-slate-400 font-bold mb-1 block">صورة القطعة:</label>
+                <label class="flex items-center justify-center bg-slate-50 border border-dashed border-slate-300 rounded-2xl p-2 text-xs text-slate-500 cursor-pointer hover:bg-slate-100">
+                  <span>{image ? '✓ تم اختيار صورة' : '📷 رفع صورة'}</span>
+                  <input type="file" accept="image/*" onChange={handleImageUpload} class="hidden" />
+                </label>
+              </div>
+            </div>
+
             <button type="submit" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 rounded-2xl text-xs transition shadow-md active:scale-95">
               + إضافة للمخزن
             </button>
           </form>
 
-          {/* شريط الفلترة */}
+          <!-- شريط الفلترة -->
           <div class="flex bg-slate-200/60 p-1 rounded-2xl text-xs font-bold text-slate-600">
             {['الكل', 'متوفر', 'تم البيع'].map(st => (
               <button 
@@ -116,14 +151,29 @@
             ))}
           </div>
 
-          {/* قائمة العناصر كبطاقات */}
+          <!-- قائمة العناصر المعروضة مع الصور والمقاسات -->
           <div class="space-y-2.5">
             {filtered.map(item => (
-              <div key={item.id} class="bg-white p-3.5 rounded-2xl border border-slate-200/60 shadow-sm flex justify-between items-center">
-                <div class="space-y-0.5">
-                  <h3 class="font-bold text-slate-800 text-sm">{item.type}</h3>
-                  <p class="text-xs font-black text-blue-600">{item.price.toLocaleString()} د.ج</p>
+              <div key={item.id} class="bg-white p-3 rounded-2xl border border-slate-200/60 shadow-sm flex justify-between items-center gap-3">
+                <div class="flex items-center gap-3">
+                  {item.image ? (
+                    <img src={item.image} alt={item.type} class="w-12 h-12 rounded-xl object-cover border border-slate-100" />
+                  ) : (
+                    <div class="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 font-bold text-xs">
+                      بلا صورة
+                    </div>
+                  )}
+                  <div class="space-y-0.5">
+                    <div class="flex items-center gap-1.5">
+                      <h3 class="font-bold text-slate-800 text-sm">{item.type}</h3>
+                      <span class="bg-slate-100 text-slate-600 text-[10px] font-black px-2 py-0.5 rounded-md border border-slate-200">
+                        {item.size}
+                      </span>
+                    </div>
+                    <p class="text-xs font-black text-blue-600">{item.price.toLocaleString()} د.ج</p>
+                  </div>
                 </div>
+
                 <div class="flex items-center gap-2">
                   <button 
                     onClick={() => toggleStatus(item.id)} 
