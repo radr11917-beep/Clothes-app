@@ -7,271 +7,732 @@
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <style>
     :root {
-      --primary: #0d233a; --accent: #f5b027; --bg: #f4f6f9; --card-bg: #ffffff;
-      --text-dark: #1e293b; --text-muted: #64748b; --border: #cbd5e1;
-      --danger: #ef4444; --success: #10b981; --profit: #2563eb;
+      --primary: #0d233a;
+      --accent: #f5b027;
+      --bg: #f4f6f9;
+      --card-bg: #ffffff;
+      --text-dark: #1e293b;
+      --text-muted: #64748b;
+      --border: #cbd5e1;
+      --danger: #ef4444;
+      --success: #10b981;
+      --profit: #2563eb;
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, sans-serif; }
-    body { background-color: var(--bg); color: var(--text-dark); padding-bottom: 40px; }
 
-    #lockScreen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--primary); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 20px; }
-    .lock-card { background: white; padding: 2rem; border-radius: 20px; width: 100%; max-width: 340px; text-align: center; box-shadow: 0 15px 35px rgba(0,0,0,0.3); }
-    .pin-input { width: 100%; padding: 12px; font-size: 1.5rem; text-align: center; border: 2px solid var(--border); border-radius: 10px; margin: 15px 0; outline: none; }
-    .btn-unlock { width: 100%; background: var(--accent); color: var(--primary); border: none; padding: 12px; border-radius: 10px; font-weight: bold; cursor: pointer; }
-    
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text-dark);
+      padding-bottom: 40px;
+    }
+
+    /* شاشة القفل */
+    #lockScreen {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: var(--primary);
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .lock-card {
+      background: white;
+      padding: 2rem 1.5rem;
+      border-radius: 20px;
+      width: 100%;
+      max-width: 340px;
+      text-align: center;
+      box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+    }
+
+    .lock-logo {
+      width: 60px;
+      height: 60px;
+      border: 3px solid var(--accent);
+      border-radius: 50%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+      font-weight: bold;
+      color: var(--primary);
+      margin: 0 auto 15px auto;
+    }
+
+    .pin-input {
+      width: 100%;
+      padding: 12px;
+      font-size: 1.5rem;
+      text-align: center;
+      letter-spacing: 8px;
+      border: 2px solid var(--border);
+      border-radius: 10px;
+      margin: 15px 0 10px 0;
+      outline: none;
+    }
+
+    .pin-input:focus { border-color: var(--accent); }
+    .lock-error { color: var(--danger); font-size: 0.85rem; font-weight: bold; min-height: 1.2rem; }
+
+    .btn-unlock {
+      width: 100%;
+      background: var(--accent);
+      color: var(--primary);
+      border: none;
+      padding: 12px;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+    /* الواجهة الرئيسية */
     #mainApp { display: none; }
-    header { background: var(--primary); color: white; padding: 1rem; display: flex; justify-content: space-between; align-items: center; }
-    .container { max-width: 600px; margin: 0 auto; padding: 1rem; }
-    
-    .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 1.2rem; }
-    .stat-card { background: var(--card-bg); border-radius: 10px; padding: 8px 4px; text-align: center; border: 1px solid #e2e8f0; }
-    .stat-value { font-size: 0.85rem; font-weight: bold; color: var(--primary); }
-    .stat-label { font-size: 0.58rem; color: var(--text-muted); }
-    
-    .products-grid { display: grid; gap: 12px; }
-    .product-card { background: white; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px; display: flex; gap: 12px; align-items: center; }
-    .product-img { width: 70px; height: 70px; border-radius: 8px; object-fit: cover; background: #f1f5f9; }
+
+    header {
+      background: var(--primary);
+      color: white;
+      padding: 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo-circle {
+      width: 44px;
+      height: 44px;
+      border: 2px solid var(--accent);
+      border-radius: 50%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.55rem;
+      font-weight: bold;
+      color: white;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+
+    .brand-text h1 {
+      font-size: 1.25rem;
+      font-weight: 800;
+      line-height: 1.1;
+    }
+
+    .brand-text p {
+      font-size: 0.7rem;
+      color: #94a3b8;
+      margin-top: 2px;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-add {
+      background: var(--accent);
+      color: var(--primary);
+      border: none;
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-weight: bold;
+      font-size: 0.85rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-lock {
+      background: rgba(255,255,255,0.15);
+      color: white;
+      border: none;
+      padding: 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 1rem;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-bottom: 1.2rem;
+    }
+
+    .stat-card {
+      background: var(--card-bg);
+      border-radius: 10px;
+      padding: 10px 4px;
+      text-align: center;
+      border: 1px solid #e2e8f0;
+    }
+
+    .stat-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 4px auto;
+      font-size: 0.8rem;
+    }
+
+    .icon-box { background: #e0e7ff; color: #3730a3; }
+    .icon-check { background: #dcfce7; color: #166534; }
+    .icon-wallet { background: #fef3c7; color: #92400e; }
+    .icon-profit { background: #dbeafe; color: #1e40af; }
+
+    .stat-label {
+      font-size: 0.6rem;
+      color: var(--text-muted);
+      margin-bottom: 2px;
+      font-weight: 600;
+    }
+
+    .stat-value {
+      font-size: 0.9rem;
+      font-weight: bold;
+      color: var(--primary);
+    }
+
+    .search-box {
+      width: 100%;
+      padding: 12px 15px;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      background: white;
+      margin-bottom: 12px;
+      outline: none;
+    }
+
+    .filters {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 1.5rem;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+
+    .filter-btn {
+      padding: 8px 16px;
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+      background: white;
+      color: var(--text-dark);
+      font-weight: 600;
+      font-size: 0.85rem;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .filter-btn.active {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+
+    .products-grid {
+      display: grid;
+      gap: 12px;
+    }
+
+    .product-card {
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 12px;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .product-img {
+      width: 70px;
+      height: 70px;
+      border-radius: 8px;
+      object-fit: cover;
+      background: #f1f5f9;
+      flex-shrink: 0;
+    }
+
     .product-details { flex: 1; text-align: right; }
-    .product-price { font-weight: bold; color: var(--success); margin-top: 5px; }
-    .btn-action { padding: 6px 12px; border-radius: 6px; cursor: pointer; border: none; font-weight: bold; }
-    .btn-sell { background: #d1fae5; color: #065f46; }
-    .btn-add { background: #e0f2fe; color: #0369a1; }
-    .badge-out { color: var(--danger); font-weight: bold; background: #fee2e2; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; }
+    .product-title { font-weight: bold; font-size: 0.95rem; }
+    .product-sub { font-size: 0.8rem; color: var(--text-muted); margin-top: 2px; }
     
-    .modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; padding: 20px; overflow-y: auto; }
-    .modal-content { background: white; padding: 1.5rem; border-radius: 16px; width: 100%; max-width: 400px; max-height: 90vh; overflow-y: auto; }
-    .form-control { width: 100%; padding: 10px; margin: 5px 0 12px 0; border: 1px solid #ddd; border-radius: 8px; }
+    .size-badge {
+      display: inline-block;
+      background: #e2e8f0;
+      color: var(--primary);
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-weight: bold;
+      font-size: 0.75rem;
+    }
+
+    .price-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 6px;
+      font-size: 0.8rem;
+    }
+
+    .buy-tag { color: #64748b; font-weight: 600; }
+    .sell-tag { color: var(--success); font-weight: bold; }
+    .profit-tag { color: var(--profit); font-weight: bold; background: #eff6ff; padding: 1px 5px; border-radius: 4px; }
+    .sold-tag { color: var(--danger); font-weight: bold; background: #fee2e2; padding: 1px 5px; border-radius: 4px; }
     
-    .file-input-label { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 10px; background: #f8fafc; border: 2px dashed #cbd5e1; border-radius: 8px; cursor: pointer; color: #64748b; font-size: 0.85rem; font-weight: 600; margin-bottom: 10px; }
+    .badge-out {
+      color: var(--danger);
+      font-weight: bold;
+      background: #fee2e2;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+    }
+
+    .action-btns {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      flex-direction: column;
+    }
+
+    .action-row {
+      display: flex;
+      gap: 5px;
+    }
+
+    .btn-action {
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: bold;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      border: 1px solid;
+    }
+
+    .btn-sell {
+      background: #d1fae5;
+      color: #065f46;
+      border-color: #a7f3d0;
+    }
+
+    .btn-add-qty {
+      background: #e0f2fe;
+      color: #0369a1;
+      border-color: #bae6fd;
+    }
+
+    .btn-edit {
+      background: #fef3c7;
+      color: #92400e;
+      border-color: #fde68a;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px 10px;
+      overflow-y: auto;
+    }
+
+    .modal-content {
+      background: white;
+      padding: 1.5rem;
+      border-radius: 16px;
+      width: 100%;
+      max-width: 420px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .modal-header {
+      font-size: 1.1rem;
+      font-weight: bold;
+      margin-bottom: 1.2rem;
+      text-align: right;
+      color: var(--primary);
+    }
+
+    .form-group {
+      margin-bottom: 0.9rem;
+      text-align: right;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 600;
+      font-size: 0.85rem;
+    }
+
+    .form-row {
+      display: flex;
+      gap: 10px;
+    }
+
+    .form-row .form-group {
+      flex: 1;
+    }
+
+    .form-control {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.9rem;
+      background-color: #f8fafc;
+      outline: none;
+    }
+
+    .file-input-wrapper {
+      position: relative;
+      width: 100%;
+    }
+
+    .file-input-label {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 10px;
+      background-color: #f8fafc;
+      border: 2px dashed var(--border);
+      border-radius: 8px;
+      cursor: pointer;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
     .file-input { display: none; }
-    .image-preview { max-height: 80px; border-radius: 6px; display: none; margin-bottom: 10px; object-fit: cover; }
+
+    .image-preview {
+      margin-top: 8px;
+      max-height: 90px;
+      border-radius: 6px;
+      display: none;
+      object-fit: cover;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 1.2rem;
+    }
+
+    .btn-save {
+      flex: 1;
+      background: var(--accent);
+      color: var(--primary);
+      border: none;
+      padding: 12px;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .btn-danger {
+      flex: 1;
+      background: var(--danger);
+      color: white;
+      border: none;
+      padding: 12px;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .btn-cancel {
+      flex: 1;
+      background: #ffffff;
+      color: var(--text-dark);
+      border: 1px solid var(--border);
+      padding: 12px;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
 
+  <!-- شاشة إدخال الرمز السري -->
   <div id="lockScreen">
     <div class="lock-card">
-      <h2 style="margin-bottom:15px;">تسجيل الدخول</h2>
+      <div class="lock-logo"><span>YOUTH</span><span>STYLE</span></div>
+      <h2 style="color:var(--primary); font-size:1.2rem; margin-bottom:5px;">سجل المخزون</h2>
+      <p style="color:var(--text-muted); font-size:0.85rem;">أدخل الرمز السري للمتابعة</p>
+      
       <form onsubmit="handleUnlock(event)">
-        <input type="password" id="pinInput" class="pin-input" placeholder="الرمز السري" required autofocus>
-        <div id="lockError" style="color:red; font-size:0.8rem; margin-bottom:10px;"></div>
-        <button type="submit" class="btn-unlock">دخول</button>
+        <input type="password" id="pinInput" class="pin-input" maxlength="8" placeholder="••••" required autofocus>
+        <div id="lockError" class="lock-error"></div>
+        <button type="submit" class="btn-unlock"><i class="fas fa-lock-open"></i> دخول</button>
       </form>
     </div>
   </div>
 
+  <!-- الواجهة الرئيسية -->
   <div id="mainApp">
     <header>
-      <div><h1 style="font-size:1.2rem;">YOUTH STYLE</h1><p id="roleTitle" style="font-size:0.7rem;"></p></div>
-      <div style="display:flex; gap:8px;">
-        <button class="btn-action btn-add" id="btnAddMain" onclick="openAddModal()"><i class="fas fa-plus"></i></button>
-        <button class="btn-action" style="background:rgba(255,255,255,0.2); color:white;" onclick="lockApp()"><i class="fas fa-lock"></i></button>
+      <div class="brand-info">
+        <div class="logo-circle">
+          <span>YOUTH</span>
+          <span>STYLE</span>
+        </div>
+        <div class="brand-text">
+          <h1>YOUTH STYLE</h1>
+          <p id="userRoleText">سجل وتتبع المخزون</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="btn-add" id="btnAddPiece" onclick="openAddModal()">
+          <i class="fas fa-plus"></i> إضافة قطعة
+        </button>
+        <button class="btn-lock" onclick="lockApp()" title="قفل">
+          <i class="fas fa-lock"></i>
+        </button>
       </div>
     </header>
 
     <div class="container">
       <div class="stats-grid" id="statsGrid">
-        <div class="stat-card"><div class="stat-label">متوفرة</div><div class="stat-value" id="availableCount">0</div></div>
-        <div class="stat-card"><div class="stat-label">تم بيعها</div><div class="stat-value" id="totalSoldCount" style="color:var(--danger);">0</div></div>
-        <div class="stat-card"><div class="stat-label">أرباح البيع</div><div class="stat-value" id="totalProfit" style="color:var(--profit);">0</div></div>
-        <div class="stat-card"><div class="stat-label">القيمة (د.ج)</div><div class="stat-value" id="totalValue">0</div></div>
+        <div class="stat-card">
+          <div class="stat-icon icon-box"><i class="fas fa-box"></i></div>
+          <div class="stat-label">المتوفرة</div>
+          <div class="stat-value" id="availableCount">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon icon-check" style="background:#fee2e2; color:#ef4444;"><i class="fas fa-shopping-cart"></i></div>
+          <div class="stat-label">تم بيعها</div>
+          <div class="stat-value" id="totalSoldCount">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon icon-profit"><i class="fas fa-chart-line"></i></div>
+          <div class="stat-label">أرباح البيع</div>
+          <div class="stat-value" id="totalProfit">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon icon-wallet"><i class="fas fa-wallet"></i></div>
+          <div class="stat-label">قيمة المخزون</div>
+          <div class="stat-value" id="totalValue">0</div>
+        </div>
+      </div>
+
+      <input type="text" class="search-box" id="searchInput" placeholder="ابحث عن نوع، وصف، أو مقاس..." oninput="renderData()">
+
+      <div class="filters" id="filtersBar">
+        <button class="filter-btn active" onclick="setFilter('الكل', this)">الكل</button>
+        <button class="filter-btn" onclick="setFilter('متوفر', this)">متوفر</button>
+        <button class="filter-btn" onclick="setFilter('منتهي', this)">منتهي</button>
       </div>
 
       <div id="productsGrid" class="products-grid"></div>
     </div>
   </div>
 
-  <!-- نافذة الإضافة والتعديل مع رفع الصور -->
+  <!-- نافذة إضافة وتعديل -->
   <div class="modal" id="itemModal">
     <div class="modal-content">
-      <div id="modalTitle" style="font-weight:bold; margin-bottom:15px;">إضافة قطعة</div>
-      <input type="hidden" id="pId">
-      
-      <label style="font-size:0.8rem; font-weight:600;">الوصف</label>
-      <input type="text" id="pDesc" class="form-control" placeholder="الوصف" required>
-      
-      <div style="display:flex; gap:10px;">
-        <div style="flex:1;"><label style="font-size:0.8rem; font-weight:600;">النوع</label><input type="text" id="pType" class="form-control" placeholder="النوع" required></div>
-        <div style="flex:1;"><label style="font-size:0.8rem; font-weight:600;">المقاس</label><input type="text" id="pSize" class="form-control" placeholder="المقاس" required></div>
+      <div class="modal-header" id="modalTitle">إضافة قطعة جديدة</div>
+      <form onsubmit="handleFormSubmit(event)">
+        <input type="hidden" id="pId">
+        
+        <div class="form-group">
+          <label>الوصف / اسم القطعة</label>
+          <input type="text" id="pDesc" class="form-control" placeholder="مثال: تيشرت ريال مدريد" required>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>النوع</label>
+            <input type="text" id="pType" class="form-control" placeholder="قميص، سروال..." required>
+          </div>
+          <div class="form-group">
+            <label>المقاس (Size)</label>
+            <input type="text" id="pSize" class="form-control" placeholder="M, L, 42..." required>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>سعر الشراء (د.ج)</label>
+            <input type="number" id="pBuyPrice" class="form-control" placeholder="0" required>
+          </div>
+          <div class="form-group">
+            <label>سعر البيع (د.ج)</label>
+            <input type="number" id="pSellPrice" class="form-control" placeholder="0" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>الكمية</label>
+          <input type="number" id="pQty" class="form-control" value="1" min="0" required>
+        </div>
+
+        <div class="form-group">
+          <label>صورة القطعة</label>
+          <div class="file-input-wrapper">
+            <label for="pImgFile" class="file-input-label" id="fileLabel">
+              <i class="fas fa-camera"></i> اختار صورة من الجهاز
+            </label>
+            <input type="file" id="pImgFile" class="file-input" accept="image/*" onchange="previewAndCompressImage(event)">
+          </div>
+          <img id="imgPreview" class="image-preview" alt="معاينة الصورة">
+        </div>
+
+        <div class="modal-actions">
+          <button type="submit" class="btn-save" id="btnSave">حفظ</button>
+          <button type="button" onclick="closeModal()" class="btn-cancel">إلغاء</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- نافذة الحذف -->
+  <div class="modal" id="deleteModal">
+    <div class="modal-content" style="text-align: center;">
+      <i class="fas fa-exclamation-triangle" style="font-size: 2.5rem; color: var(--danger); margin-bottom: 1rem;"></i>
+      <div class="modal-header" style="text-align: center; margin-bottom: 0.5rem;">تأكيد الحذف</div>
+      <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.5rem;">هل أنت متأكد من رغبتك في حذف هذه القطعة نهائياً؟</p>
+      <div class="modal-actions">
+        <button type="button" class="btn-danger" id="confirmDeleteBtn">حذف</button>
+        <button type="button" class="btn-cancel" onclick="closeDeleteModal()">إلغاء</button>
       </div>
-
-      <div style="display:flex; gap:10px;">
-        <div style="flex:1;"><label style="font-size:0.8rem; font-weight:600;">سعر الشراء</label><input type="number" id="pBuyPrice" class="form-control" placeholder="شراء" required></div>
-        <div style="flex:1;"><label style="font-size:0.8rem; font-weight:600;">سعر البيع</label><input type="number" id="pSellPrice" class="form-control" placeholder="بيع" required></div>
-      </div>
-
-      <label style="font-size:0.8rem; font-weight:600;">الكمية</label>
-      <input type="number" id="pQty" class="form-control" placeholder="الكمية" required>
-
-      <label style="font-size:0.8rem; font-weight:600;">صورة القطعة</label>
-      <div class="file-input-wrapper">
-        <label for="pImgFile" class="file-input-label" id="fileLabel">
-          <i class="fas fa-camera"></i> اختر صورة من الجهاز
-        </label>
-        <input type="file" id="pImgFile" class="file-input" accept="image/*" onchange="previewAndCompressImage(event)">
-      </div>
-      <img id="imgPreview" class="image-preview" alt="معاينة الصورة">
-
-      <button class="btn-unlock" onclick="handleFormSubmit()">حفظ</button>
-      <button class="btn-action" style="width:100%; margin-top:10px; background:#ddd;" onclick="closeModal()">إلغاء</button>
     </div>
   </div>
 
   <script>
     const ADMIN_PIN = "2007";
     const VIEWER_PIN = "2006";
-    const API_URL = "https://script.google.com/macros/s/AKfycbz53vHTg2X9DFG-gNILnSO87vYu1EJLb3tabP84P21bz1e2GaYQ1fxn36iGkesNG-3TVQ/exec";
+    const API_URL = "https://script.google.com/macros/s/AKfycby94RBGENMfru7hlUb6i1SUpQHLfqqJ2sHTVUtTdK8-eN7wbwowvp8QL7AWLJSSnUY6Jw/exec";
     
-    let userRole = "none", allItems = [], base64Image = "";
+    let userRole = "none";
+    let allItems = [];
+    let currentFilter = 'الكل';
+    let base64Image = "";
+    let itemToDeleteId = null;
 
     function handleUnlock(e) {
-      e.preventDefault();
-      const p = document.getElementById("pinInput").value.trim();
-      if (p === ADMIN_PIN) { userRole = "admin"; initApp(); }
-      else if (p === VIEWER_PIN) { userRole = "viewer"; initApp(); }
-      else document.getElementById("lockError").innerText = "رمز خطأ";
+      if (e) e.preventDefault();
+      const inputEl = document.getElementById("pinInput");
+      const enteredPin = inputEl.value.toString().trim();
+      
+      if (enteredPin === ADMIN_PIN) {
+        userRole = "admin";
+        applyRolePermissions();
+        unlockView();
+      } else if (enteredPin === VIEWER_PIN) {
+        userRole = "viewer";
+        applyRolePermissions();
+        unlockView();
+      } else {
+        document.getElementById("lockError").innerText = "الرمز السري غير صحيح!";
+        inputEl.value = "";
+        inputEl.focus();
+      }
     }
 
-    function initApp() {
+    function applyRolePermissions() {
+      const btnAdd = document.getElementById("btnAddPiece");
+      const statsGrid = document.getElementById("statsGrid");
+      const profitCard = document.getElementById("profitCard");
+      const roleText = document.getElementById("userRoleText");
+
+      if (userRole === "admin") {
+        btnAdd.style.display = "flex";
+        statsGrid.style.display = "grid";
+        roleText.innerText = "لوحة التحكم (المدير)";
+      } else {
+        btnAdd.style.display = "none";
+        statsGrid.style.display = "none";
+        roleText.innerText = "سجل المبيعات (عرض وبيع)";
+      }
+    }
+
+    function unlockView() {
+      document.getElementById("lockError").innerText = "";
       document.getElementById("lockScreen").style.display = "none";
       document.getElementById("mainApp").style.display = "block";
-      document.getElementById("roleTitle").innerText = userRole === "admin" ? "لوحة المدير" : "لوحة المبيعات";
-      document.getElementById("btnAddMain").style.display = userRole === "admin" ? "block" : "none";
-      document.getElementById("statsGrid").style.display = userRole === "admin" ? "grid" : "none";
       fetchData();
     }
 
+    function lockApp() {
+      userRole = "none";
+      document.getElementById("mainApp").style.display = "none";
+      document.getElementById("lockScreen").style.display = "flex";
+      document.getElementById("pinInput").value = "";
+      document.getElementById("lockError").innerText = "";
+      document.getElementById("pinInput").focus();
+    }
+
     async function fetchData() {
-      const res = await fetch(API_URL + "?t=" + new Date().getTime());
-      allItems = await res.json();
-      renderData();
+      try {
+        const res = await fetch(API_URL + "?t=" + new Date().getTime());
+        const data = await res.json();
+        const items = data.items || data;
+        allItems = Array.isArray(items) ? items.filter(item => item && item.desc && item.desc.toString().trim() !== "" && item.id) : [];
+        renderData();
+      } catch (e) {
+        console.error("Error fetching data:", e);
+      }
     }
 
     function renderData() {
-      const grid = document.getElementById("productsGrid");
-      grid.innerHTML = "";
-      allItems.forEach(item => {
-        const qty = Number(item.qty || 0);
-        const sold = Number(item.sold || 0);
-        const buy = Number(item.buyPrice || 0);
-        const sell = Number(item.sellPrice || 0);
-        const profit = (sell - buy) * sold;
-        const isOutOfStock = qty <= 0;
-
-        const div = document.createElement("div");
-        div.className = "product-card";
-        div.innerHTML = `
-          <img src="${item.image || 'https://via.placeholder.com/70'}" class="product-img">
-          <div class="product-details">
-            <div style="font-weight:bold;">${item.desc}</div>
-            <div style="font-size:0.8rem; color:gray;">${item.type} | مقاس: ${item.size}</div>
-            <div style="font-size:0.8rem; margin-top:2px;">
-              ${isOutOfStock ? '<span class="badge-out">Out of stock</span>' : `الكمية: <strong>${qty}</strong>`} | 
-              <span style="color:var(--danger); font-size:0.75rem;">المباع: ${sold}</span>
-              ${userRole === 'admin' ? ` | <span style="color:var(--profit); font-size:0.75rem;">الربح: ${profit} د.ج</span>` : ''}
-            </div>
-            <div class="product-price">${sell} د.ج</div>
-          </div>
-          <div class="action-btns" style="display:flex; flex-direction:column; gap:5px;">
-            <button class="btn-action btn-sell" onclick="sellItem('${item.id}')" ${isOutOfStock ? 'disabled style="opacity:0.3"' : ''}>بيع (-)</button>
-            ${userRole === 'admin' ? `<button class="btn-action btn-add" onclick="addQty('${item.id}')">+</button>` : ''}
-          </div>
-        `;
-        grid.appendChild(div);
+      const search = document.getElementById("searchInput").value.toLowerCase();
+      
+      const filtered = allItems.filter(item => {
+        const isOutOfStock = Number(item.qty || 0) <= 0 || item.status === 'منتهي';
+        const itemStatus = isOutOfStock ? 'منتهي' : 'متوفر';
+        
+        const matchesFilter = currentFilter === 'الكل' || itemStatus === currentFilter;
+        const matchesSearch = (item.desc || '').toLowerCase().includes(search) || 
+                              (item.type || '').toLowerCase().includes(search) ||
+                              (item.size || '').toLowerCase().includes(search);
+        return matchesFilter && matchesSearch;
       });
-      if(userRole === 'admin') updateStats();
-    }
 
-    async function sellItem(id) {
-      const item = allItems.find(i => i.id == id);
-      if(!item) return;
-      if(Number(item.qty) > 0) {
-        item.qty = Number(item.qty) - 1;
-        item.sold = Number(item.sold || 0) + 1;
-        renderData();
-        await fetch(API_URL, {method:"POST", body: JSON.stringify({action:"save", item:item})});
-      }
-    }
-
-    async function addQty(id) {
-      const item = allItems.find(i => i.id == id);
-      if(!item) return;
-      item.qty = Number(item.qty || 0) + 1;
-      renderData();
-      await fetch(API_URL, {method:"POST", body: JSON.stringify({action:"save", item:item})});
-    }
-
-    function updateStats() {
-      document.getElementById("availableCount").innerText = allItems.filter(i => Number(i.qty || 0) > 0).length;
-      document.getElementById("totalSoldCount").innerText = allItems.reduce((a, b) => a + Number(b.sold || 0), 0);
-      document.getElementById("totalProfit").innerText = allItems.reduce((a, b) => a + ((Number(b.sellPrice || 0) - Number(b.buyPrice || 0)) * Number(b.sold || 0)), 0);
-      document.getElementById("totalValue").innerText = allItems.reduce((a, b) => a + (Number(b.sellPrice || 0) * Number(b.qty || 0)), 0);
-    }
-
-    function previewAndCompressImage(event) {
-      const file = event.target.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-          const img = new Image();
-          img.onload = function() {
-            const canvas = document.createElement('canvas');
-            const maxWidth = 160;
-            const scaleSize = maxWidth / img.width;
-            canvas.width = maxWidth;
-            canvas.height = img.height * scaleSize;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-            base64Image = canvas.toDataURL('image/jpeg', 0.5);
-
-            const preview = document.getElementById("imgPreview");
-            preview.src = base64Image;
-            preview.style.display = "block";
-            document.getElementById("fileLabel").innerHTML = `<i class="fas fa-check"></i> تم اختيار الصورة بنجاح`;
-          };
-          img.src = e.target.result;
-        };
-        reader.readAsDataURL(file);
-      }
-    }
-
-    function lockApp() { location.reload(); }
+      if (userRole === "admin") {
+        const availableItems = allItems.filter(i => Number(i.qty || 0) > 0);
     
-    function openAddModal() { 
-      document.getElementById("pDesc").value = "";
-      document.getElementById("pType").value = "";
-      document.getElementById("pSize").value = "";
-      document.getElementById("pBuyPrice").value = "";
-      document.getElementById("pSellPrice").value = "";
-      document.getElementById("pQty").value = "1";
-      base64Image = "";
-      document.getElementById("imgPreview").style.display = "none";
-      document.getElementById("fileLabel").innerHTML = `<i class="fas fa-camera"></i> اختر صورة من الجهاز`;
-      document.getElementById("itemModal").style.display = "flex"; 
-    }
-    
-    function closeModal() { document.getElementById("itemModal").style.display = "none"; }
-    
-    async function handleFormSubmit() {
-        const desc = document.getElementById("pDesc").value;
-        const type = document.getElementById("pType").value;
-        const size = document.getElementById("pSize").value;
-        const buyPrice = document.getElementById("pBuyPrice").value;
-        const sellPrice = document.getElementById("pSellPrice").value;
-        const qty = document.getElementById("pQty").value;
-
-        if(!desc || !type || !size || !buyPrice || !sellPrice || !qty) {
-          alert("الرجاء ملء جميع الحقول المطلوبة");
-          return;
-        }
-
-        const item = {
-            id: Date.now(), desc, type, size, buyPrice, sellPrice, qty, sold: 0, image: base64Image
-        };
-        closeModal();
-        await fetch(API_URL, {method:"POST", body: JSON.stringify({action:"save", item:item})});
-        location.reload();
-    }
-  </script>
-</body>
-</html>
