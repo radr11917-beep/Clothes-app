@@ -38,9 +38,13 @@
     .btn-add { background: #e0f2fe; color: #0369a1; }
     .badge-out { color: var(--danger); font-weight: bold; background: #fee2e2; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; }
     
-    .modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; padding: 20px; }
-    .modal-content { background: white; padding: 1.5rem; border-radius: 16px; width: 100%; max-width: 400px; }
-    .form-control { width: 100%; padding: 10px; margin: 5px 0 15px 0; border: 1px solid #ddd; border-radius: 8px; }
+    .modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; padding: 20px; overflow-y: auto; }
+    .modal-content { background: white; padding: 1.5rem; border-radius: 16px; width: 100%; max-width: 400px; max-height: 90vh; overflow-y: auto; }
+    .form-control { width: 100%; padding: 10px; margin: 5px 0 12px 0; border: 1px solid #ddd; border-radius: 8px; }
+    
+    .file-input-label { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 10px; background: #f8fafc; border: 2px dashed #cbd5e1; border-radius: 8px; cursor: pointer; color: #64748b; font-size: 0.85rem; font-weight: 600; margin-bottom: 10px; }
+    .file-input { display: none; }
+    .image-preview { max-height: 80px; border-radius: 6px; display: none; margin-bottom: 10px; object-fit: cover; }
   </style>
 </head>
 <body>
@@ -77,13 +81,37 @@
     </div>
   </div>
 
+  <!-- نافذة الإضافة والتعديل مع رفع الصور -->
   <div class="modal" id="itemModal">
     <div class="modal-content">
       <div id="modalTitle" style="font-weight:bold; margin-bottom:15px;">إضافة قطعة</div>
-      <input type="hidden" id="pId"><input type="text" id="pDesc" class="form-control" placeholder="الوصف">
-      <div style="display:flex; gap:10px;"><input type="text" id="pType" class="form-control" placeholder="النوع"><input type="text" id="pSize" class="form-control" placeholder="المقاس"></div>
-      <div style="display:flex; gap:10px;"><input type="number" id="pBuyPrice" class="form-control" placeholder="شراء"><input type="number" id="pSellPrice" class="form-control" placeholder="بيع"></div>
-      <input type="number" id="pQty" class="form-control" placeholder="الكمية">
+      <input type="hidden" id="pId">
+      
+      <label style="font-size:0.8rem; font-weight:600;">الوصف</label>
+      <input type="text" id="pDesc" class="form-control" placeholder="الوصف" required>
+      
+      <div style="display:flex; gap:10px;">
+        <div style="flex:1;"><label style="font-size:0.8rem; font-weight:600;">النوع</label><input type="text" id="pType" class="form-control" placeholder="النوع" required></div>
+        <div style="flex:1;"><label style="font-size:0.8rem; font-weight:600;">المقاس</label><input type="text" id="pSize" class="form-control" placeholder="المقاس" required></div>
+      </div>
+
+      <div style="display:flex; gap:10px;">
+        <div style="flex:1;"><label style="font-size:0.8rem; font-weight:600;">سعر الشراء</label><input type="number" id="pBuyPrice" class="form-control" placeholder="شراء" required></div>
+        <div style="flex:1;"><label style="font-size:0.8rem; font-weight:600;">سعر البيع</label><input type="number" id="pSellPrice" class="form-control" placeholder="بيع" required></div>
+      </div>
+
+      <label style="font-size:0.8rem; font-weight:600;">الكمية</label>
+      <input type="number" id="pQty" class="form-control" placeholder="الكمية" required>
+
+      <label style="font-size:0.8rem; font-weight:600;">صورة القطعة</label>
+      <div class="file-input-wrapper">
+        <label for="pImgFile" class="file-input-label" id="fileLabel">
+          <i class="fas fa-camera"></i> اختر صورة من الجهاز
+        </label>
+        <input type="file" id="pImgFile" class="file-input" accept="image/*" onchange="previewAndCompressImage(event)">
+      </div>
+      <img id="imgPreview" class="image-preview" alt="معاينة الصورة">
+
       <button class="btn-unlock" onclick="handleFormSubmit()">حفظ</button>
       <button class="btn-action" style="width:100%; margin-top:10px; background:#ddd;" onclick="closeModal()">إلغاء</button>
     </div>
@@ -93,7 +121,8 @@
     const ADMIN_PIN = "2007";
     const VIEWER_PIN = "2006";
     const API_URL = "https://script.google.com/macros/s/AKfycbz53vHTg2X9DFG-gNILnSO87vYu1EJLb3tabP84P21bz1e2GaYQ1fxn36iGkesNG-3TVQ/exec";
-    let userRole = "none", allItems = [];
+    
+    let userRole = "none", allItems = [], base64Image = "";
 
     function handleUnlock(e) {
       e.preventDefault();
@@ -179,17 +208,67 @@
       document.getElementById("totalValue").innerText = allItems.reduce((a, b) => a + (Number(b.sellPrice || 0) * Number(b.qty || 0)), 0);
     }
 
+    function previewAndCompressImage(event) {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const img = new Image();
+          img.onload = function() {
+            const canvas = document.createElement('canvas');
+            const maxWidth = 160;
+            const scaleSize = maxWidth / img.width;
+            canvas.width = maxWidth;
+            canvas.height = img.height * scaleSize;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            base64Image = canvas.toDataURL('image/jpeg', 0.5);
+
+            const preview = document.getElementById("imgPreview");
+            preview.src = base64Image;
+            preview.style.display = "block";
+            document.getElementById("fileLabel").innerHTML = `<i class="fas fa-check"></i> تم اختيار الصورة بنجاح`;
+          };
+          img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+
     function lockApp() { location.reload(); }
-    function openAddModal() { document.getElementById("itemModal").style.display = "flex"; }
+    
+    function openAddModal() { 
+      document.getElementById("pDesc").value = "";
+      document.getElementById("pType").value = "";
+      document.getElementById("pSize").value = "";
+      document.getElementById("pBuyPrice").value = "";
+      document.getElementById("pSellPrice").value = "";
+      document.getElementById("pQty").value = "1";
+      base64Image = "";
+      document.getElementById("imgPreview").style.display = "none";
+      document.getElementById("fileLabel").innerHTML = `<i class="fas fa-camera"></i> اختر صورة من الجهاز`;
+      document.getElementById("itemModal").style.display = "flex"; 
+    }
+    
     function closeModal() { document.getElementById("itemModal").style.display = "none"; }
     
     async function handleFormSubmit() {
+        const desc = document.getElementById("pDesc").value;
+        const type = document.getElementById("pType").value;
+        const size = document.getElementById("pSize").value;
+        const buyPrice = document.getElementById("pBuyPrice").value;
+        const sellPrice = document.getElementById("pSellPrice").value;
+        const qty = document.getElementById("pQty").value;
+
+        if(!desc || !type || !size || !buyPrice || !sellPrice || !qty) {
+          alert("الرجاء ملء جميع الحقول المطلوبة");
+          return;
+        }
+
         const item = {
-            id: Date.now(), desc: document.getElementById("pDesc").value,
-            type: document.getElementById("pType").value, size: document.getElementById("pSize").value,
-            buyPrice: document.getElementById("pBuyPrice").value, sellPrice: document.getElementById("pSellPrice").value,
-            qty: document.getElementById("pQty").value, sold: 0
+            id: Date.now(), desc, type, size, buyPrice, sellPrice, qty, sold: 0, image: base64Image
         };
+        closeModal();
         await fetch(API_URL, {method:"POST", body: JSON.stringify({action:"save", item:item})});
         location.reload();
     }
