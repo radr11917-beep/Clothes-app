@@ -565,6 +565,7 @@
         <button class="filter-btn active" onclick="setFilter('الكل', this)">الكل</button>
         <button class="filter-btn" onclick="setFilter('متوفر', this)">متوفر</button>
         <button class="filter-btn" onclick="setFilter('منتهي', this)">منتهي</button>
+        <button class="filter-btn" onclick="setFilter('تم بيعها', this)">تم بيعها</button>
       </div>
 
       <div id="productsGrid" class="products-grid"></div>
@@ -722,17 +723,16 @@
       const search = document.getElementById("searchInput").value.toLowerCase();
       
       const filtered = allItems.filter(item => {
-        const isOutOfStock = Number(item.qty || 0) <= 0 || item.status === 'منتهي';
-        const itemStatus = isOutOfStock ? 'منتهي' : 'متوفر';
+        const qty = Number(item.qty || 0);
+        const sold = Number(item.sold || 0);
+        const isOutOfStock = qty <= 0 || item.status === 'منتهي';
+        const isSold = sold > 0;
         
-        const matchesFilter = currentFilter === 'الكل' || itemStatus === currentFilter;
+        let matchesFilter = true;
+        if (currentFilter === 'متوفر') matchesFilter = !isOutOfStock;
+        else if (currentFilter === 'منتهي') matchesFilter = isOutOfStock;
+        else if (currentFilter === 'تم بيعها') matchesFilter = isSold;
+
         const matchesSearch = (item.desc || '').toLowerCase().includes(search) || 
                               (item.type || '').toLowerCase().includes(search) ||
-                              (item.size || '').toLowerCase().includes(search);
-        return matchesFilter && matchesSearch;
-      });
-
-      if (userRole === "admin") {
-        const availableItems = allItems.filter(i => Number(i.qty || 0) > 0);
-        const availablePieces = availableItems.reduce((acc, i) => acc + Number(i.qty || 0), 0);
-        document.getElem
+                              (item.size || '').toLowerCase().includes(sea
